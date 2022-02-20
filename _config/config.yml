@@ -1,0 +1,14 @@
+---
+Name: restruct-faqs
+After:
+  - 'framework/*'
+  - 'cms/*'
+---
+
+SilverStripe\CMS\Model\SiteTree:
+  extensions:
+    - OenoGallery\Extensions\SiteTreeExtension
+
+PageController:
+  extensions:
+    - OenoGallery\Extensions\SiteTreeControllerExtension

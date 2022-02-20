@@ -1,0 +1,36 @@
+{
+  "name": "restruct/silverstripe-faqs",
+  "description": "Silverstripe Frequently Asked Questions module",
+  "type": "silverstripe-vendormodule",
+  "keywords": [
+    "silverstripe",
+    "faqs"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Restruct",
+      "homepage": "https://github.com/restruct/silverstripe-faqs"
+    }
+  ],
+  "require": {
+    "silverstripe/framework": "4.x@stable"
+  },
+  "autoload": {
+    "psr-4": {
+      "Restruct\\SilverStripe\\FAQs\\": "src/"
+    },
+    "classmap": [
+      "src"
+    ]
+  },
+  "include-path": [
+    "src/"
+  ],
+  "extra": {
+    "installer-name": "faqs",
+    "expose": [
+      "js"
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-<% if Top.Faqs %>
+<% if $Top.Faqs %>
 <div id="togglediv" class="faqcontainer">
 	<div>
 		<% if $ClassName != 'FaqPage' %>
