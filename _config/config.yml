@@ -1,14 +1,12 @@
 ---
-Name: restruct-faqs
-After:
-  - 'framework/*'
-  - 'cms/*'
+Name: restruct-faqs-config
+After: 'framework/*'
 ---
 
 SilverStripe\CMS\Model\SiteTree:
   extensions:
-    - OenoGallery\Extensions\SiteTreeExtension
+    - Restruct\silverstripe\FAQs\Extensions\SiteTreeExtension
 
 PageController:
   extensions:
-    - OenoGallery\Extensions\SiteTreeControllerExtension
+    - Restruct\silverstripe\FAQs\Extensions\SiteTreeControllerExtension

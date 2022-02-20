@@ -13,6 +13,7 @@ use SilverStripe\ORM\DataList;
 use SilverStripe\ORM\DataObject;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\SecurityToken;
+use Page;
 
 /**
  * @property string     $CategoryList
@@ -21,6 +22,8 @@ use SilverStripe\Security\SecurityToken;
  */
 class Faq extends DataObject
 {
+
+    private static $table_name = 'Faq';
 
     private static $db = [
         'Title'      => 'Varchar(255)',
@@ -33,7 +36,9 @@ class Faq extends DataObject
     //public static $default_sort = 'SortOrder';
     private static $securityEnabled = true;
 
-    private static $has_one = [];
+    private static $has_one = [
+        'Page' => Page::class,
+    ];
 
     // many_many added back by extension
     private static $belongs_many_many = [

@@ -11,6 +11,8 @@ use SilverStripe\Security\Permission;
 class FaqCategory extends DataObject
 {
 
+    private static $table_name = 'FaqCategory';
+
     private static $db = [
         'Title' => 'Varchar',
         'Sort'  => 'Int',

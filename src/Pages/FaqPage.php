@@ -2,13 +2,22 @@
 
 namespace Restruct\silverstripe\FAQs\Pages;
 
+use Restruct\silverstripe\FAQs\Models\Faq;
 use Restruct\silverstripe\FAQs\Models\FaqCategory;
 use SilverStripe\Forms\HeaderField;
 use Page;
-use PageController;
 
 class FaqPage extends Page
 {
+
+    private static $table_name = 'FaqPage';
+
+    /**
+     * @var string[]
+     */
+    private static $has_many = [
+        'Faqs' => Faq::class,
+    ];
 
     public function getCMSFields()
     {
