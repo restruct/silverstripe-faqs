@@ -1,10 +1,11 @@
 <?php
 
-namespace Restruct\silverstripe\FAQs\Extensions;
+namespace Restruct\SilverStripe\FAQs\Extensions;
 
-use Restruct\silverstripe\FAQs\Models\Faq;
+use Restruct\SilverStripe\FAQs\Models\Faq;
 use SilverStripe\Control\Cookie;
 use SilverStripe\Core\Extension;
+use SilverStripe\Dev\Debug;
 use SilverStripe\Security\SecurityToken;
 
 class SiteTreeControllerExtension extends Extension
@@ -18,10 +19,13 @@ class SiteTreeControllerExtension extends Extension
     ];
 
     // Add this method to the Pages in order to get the Faqs in the right SortOrder (overwrite to do filtering)
-    public function Faqs()
+
+    /*
+    public function Faqs__()
     {
         return $this->owner->getManyManyComponents('Faqs')->sort('FaqSortOrderForPage');
     }
+    */
 
     // Count clicks on FAQs in order to 'vote';
     public function faqvote()
@@ -34,6 +38,7 @@ class SiteTreeControllerExtension extends Extension
             }
         }
         if ( $faqid = $this->owner->urlParams[ 'ID' ] ) {
+
             // check already voted;
             if ( $voted = Cookie::get('votedfaqs') ) {
                 $voted_arr = explode(',', $voted);
@@ -47,8 +52,9 @@ class SiteTreeControllerExtension extends Extension
             $faq = Faq::get()->byID($faqid);
             if ( $faq ) {
                 $faq->ClickCount++;
-                $faq->write();
+                $faq->writeWithoutVersion();
             }
+
             // save vote to cookie
             if ( !empty($voted_arr) ) {
                 $voted_arr[] = $faqid; //add
@@ -58,7 +64,7 @@ class SiteTreeControllerExtension extends Extension
             Cookie::set('votedfaqs', implode(',', $voted_arr));
 
             return "OK";
-        };
+        }
     }
 
 

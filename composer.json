@@ -14,7 +14,9 @@
     }
   ],
   "require": {
-    "silverstripe/framework": "4.x@stable"
+    "silverstripe/framework": "4.x@stable",
+    "silverstripe/lumberjack": "dev-master",
+    "restruct/silverstripe-filterablearchive": "dev-master"
   },
   "autoload": {
     "psr-4": {
@@ -30,7 +32,8 @@
   "extra": {
     "installer-name": "faqs",
     "expose": [
-      "js"
+      "client/dist/js",
+      "client/dist/css"
     ]
   }
 }

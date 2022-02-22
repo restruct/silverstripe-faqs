@@ -1,6 +1,6 @@
 <?php
 
-namespace Restruct\silverstripe\FAQs\Models;
+namespace Restruct\SilverStripe\FAQs\Models;
 
 use SilverStripe\CMS\Model\SiteTree;
 use SilverStripe\Control\Controller;
@@ -20,30 +20,36 @@ use Page;
  * @property mixed|null $ClickCount
  * @method DataList Categories()
  */
-class Faq extends DataObject
+class Faq extends Page
 {
 
+    /**
+     * @var string
+     */
     private static $table_name = 'Faq';
 
+    private static $description = 'Frequently Asked Question';
+
+    private static $can_be_root = false;
+
+    private static $show_in_sitetree = false;
+
+    private static $allowed_children = [];
+
+    /**
+     * @var string
+     */
+    private static $default_sort = 'Sort';
+
     private static $db = [
-        'Title'      => 'Varchar(255)',
-        'Content'    => 'HTMLText',
-        'Sort'       => 'Int',
-        //'CategoryList' => 'Varchar(255)', // to hold a list of many_many Categories for summary_fields
         'ClickCount' => 'Int', // implement on Page (
     ];
 
-    //public static $default_sort = 'SortOrder';
     private static $securityEnabled = true;
-
-    private static $has_one = [
-        'Page' => Page::class,
-    ];
 
     // many_many added back by extension
     private static $belongs_many_many = [
-        'Categories' => FaqCategory::class,
-        'Pages'      => SiteTree::class,
+        //'Categories' => FaqCategory::class,
     ];
 
     private static $searchable_fields = [
@@ -107,22 +113,28 @@ class Faq extends DataObject
     {
 
         // Create new tabset & tabs;
-        $fields = FieldList::create();
-        $fields->add(new TabSet("Root"));
+        //$fields = FieldList::create();
+        $fields = parent::getCMSFields();
+        //$fields->add(new TabSet("Root"));
 
-        $fields->addFieldToTab("Root.Main", TextField::create('Title', 'Question'));
+        $fields->dataFieldByName('Title')->setTitle('Question');
 
+        //$fields->addFieldToTab("Root.Main", TextField::create('Title', 'Question'));
+
+        /*
         $oCategories = FaqCategory::get();
         $oCategoryMap = $oCategories ? $oCategories->map('ID', 'Title')->toArray() : [];
         $oCategoryListField = ListboxField::create('Categories', null);
         $oCategoryListField->setSource($oCategoryMap);
         $fields->addFieldToTab("Root.Main", $oCategoryListField);
+        */
 
-        $fields->addFieldToTab("Root.Main", $answer = HTMLEditorField::create('Content', "Answer"));
-        $answer->setRows(20);
+        //$fields->addFieldToTab("Root.Main", $answer = HTMLEditorField::create('Content', "Answer"));
+        $content = $fields->dataFieldByName('Content');
+        $content->setRows(20);
         //$answer->setColumns(4); // Not working?
 
-        $this->extend('updateCMSFields', $fields);
+        //$this->extend('updateCMSFields', $fields);
 
         return $fields;
 

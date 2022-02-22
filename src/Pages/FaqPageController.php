@@ -1,11 +1,10 @@
 <?php
 
-namespace Restruct\silverstripe\FAQs\Pages;
+namespace Restruct\SilverStripe\FAQs\Pages;
 
 use PageController;
-use Restruct\silverstripe\FAQs\Models\Faq;
-use Restruct\silverstripe\FAQs\Models\FaqCategory;
-use SilverStripe\Forms\DropdownField;
+use SilverStripe\Dev\Debug;
+use SilverStripe\ORM\DataList;
 
 class FaqPageController extends PageController
 {
@@ -14,18 +13,29 @@ class FaqPageController extends PageController
 //		'filter'
     ];
 
-    public function Faqs()
+    public function Faqs($limit = null)
     {
 
+        /*
         $filter = (int)$this->request->requestVar('filter');
         if ( !empty($filter) && $oFaqCategory = FaqCategory::get()->byID($filter) ) {
             return $oFaqCategory->Faqs()->sort('ClickCount DESC');
         }
+        */
 
         // else just return all;
-        return Faq::get()->sort('ClickCount DESC');
+
+        /** @var DataList $oFAQs */
+        $oFAQs = $this->Children();
+
+        //Casting Limit to int, otherwise the $oFAQs will return null
+       $limit = (int)$limit;
+
+        //if limit is null, all records will be returned
+        return $oFAQs->sort('ClickCount DESC')->limit($limit);
     }
 
+    /*
     public function FaqCatDropdown()
     {
         $oFaqCategories = FaqCategory::get();
@@ -41,5 +51,6 @@ class FaqPageController extends PageController
 
         return $oFilterDropdownField;
     }
+    */
 
 }

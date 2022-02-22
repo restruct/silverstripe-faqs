@@ -3,10 +3,21 @@ Name: restruct-faqs-config
 After: 'framework/*'
 ---
 
-SilverStripe\CMS\Model\SiteTree:
-  extensions:
-    - Restruct\silverstripe\FAQs\Extensions\SiteTreeExtension
-
 PageController:
   extensions:
-    - Restruct\silverstripe\FAQs\Extensions\SiteTreeControllerExtension
+    - Restruct\SilverStripe\FAQs\Extensions\SiteTreeControllerExtension
+
+Restruct\SilverStripe\FAQs\Pages\FaqPage:
+  extensions:
+    - Restruct\SilverStripe\FilterableArchive\Extensions\HolderExtension
+  pagination_control_tab: "Root.FilterableConfiguration"
+  managed_object_class: Restruct\SilverStripe\FAQs\Models\Faq
+  #managed_object_date_field: "Created"
+
+Restruct\SilverStripe\FAQs\Pages\FaqPageController:
+  extensions:
+    - Restruct\SilverStripe\FilterableArchive\Extensions\HolderControllerExtension
+
+Restruct\SilverStripe\FAQs\Models\Faq:
+  extensions:
+    - Restruct\SilverStripe\FilterableArchive\Extensions\ItemExtension
