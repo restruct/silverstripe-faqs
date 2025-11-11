@@ -9,7 +9,6 @@ A SilverStripe 5 module for managing and displaying frequently asked questions (
 - **FAQ Pages**: Display selected categories and their FAQs on a page
 - **Sort Order**: Automatic and manual sorting of FAQs within categories
 - **CMS Management**: Dedicated ModelAdmin section for managing FAQs and categories
-- **Versioned**: FAQs support draft/published workflow
 
 ## Installation
 
