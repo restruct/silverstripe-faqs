@@ -37,8 +37,8 @@ class FaqQuestion extends DataObject
      * @var array
      * @config
      */
-    private static $many_many = [
-        'FaqCategories' => FaqCategory::class,
+    private static $belongs_many_many = [
+        'FaqCategories' => FaqCategory::class . '.Faqs',
     ];
 
     /**
