@@ -1,0 +1,27 @@
+en:
+  Restruct\FAQ\Model\FaqQuestion:
+    SINGULARNAME: 'FAQ'
+    PLURALNAME: 'FAQs'
+    Question: 'Question'
+    Answer: 'Answer'
+    SortOrder: 'Sort Order'
+    FaqCategories: 'FAQ Categories'
+    NoCategoriesAssigned: 'No categories assigned'
+    GridFieldTitle: 'FAQ Questions'
+
+  Restruct\FAQ\Model\FaqCategory:
+    SINGULARNAME: 'FAQ Category'
+    PLURALNAME: 'FAQ Categories'
+    Title: 'Title'
+    Faqs: 'FAQs'
+    GridFieldTitle: 'FAQ Questions'
+
+  Restruct\FAQ\Pages\FAQPage:
+    SINGULARNAME: 'FAQ Page'
+    PLURALNAME: 'FAQ Pages'
+    DESCRIPTION: 'A page that displays frequently asked questions organized by categories'
+    FaqCategories: 'FAQ Categories'
+    NoFaqsMessage: 'No FAQs have been added to this page yet.'
+
+  Restruct\FAQ\Admin\FAQAdmin:
+    MENUTITLE: 'FAQs'

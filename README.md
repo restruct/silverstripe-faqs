@@ -1,10 +1,64 @@
-# Silverstripe Frequently Asked Questions module
+# Restruct FAQ Module
 
-## TODO/Desired functionality:
-- [ ] For SEO purposes I'd like to move the FAQ from DataObject to a SiteTree subclass (so each FAQ is an actual page with URL).
-- [ ] Categorization & Tagging should be removed from this module and provided by new dependency: [Filterable Archive module](https://github.com/restruct/silverstripe-filterablearchive)
-- [ ] FaqAdmin should be removed, FAQs will be manageable from (a) FaqPage(s) - FaqPages are 
-- [ ] A SiteTree extension provides `faqvote` functionality (see `FaqSiteTreeControllerExtension`); simple background ajax method called to count the times a specific question has been opened (maybe use WriteWithoutVersion or comparable to simply keep track in a field on the FAQ without creating thousands of version rows in the DB)
-- [ ] FAQs are/can be auto-sorted based on their 'vote count'/popularity
-- [ ] A SiteTree extension provides functionality to link/include a few specific FAQs on a page (eg below the content/in a block if using Elemental)
-- [ ] ...
+A SilverStripe 5 module for managing and displaying frequently asked questions (FAQs).
+
+## Features
+
+- **FAQ Categories**: Organize FAQs into categories
+- **FAQs**: Manage questions and answers with HTML formatting
+- **FAQ Pages**: Display selected categories and their FAQs on a page
+- **Sort Order**: Automatic and manual sorting of FAQs within categories
+- **CMS Management**: Dedicated ModelAdmin section for managing FAQs and categories
+- **Versioned**: FAQs support draft/published workflow
+
+## Installation
+
+After adding the module:
+
+```bash
+composer dump-autoload
+vendor/bin/sake dev/build flush=1
+```
+
+## Usage
+
+### In the CMS
+
+1. **Managing FAQs**: Go to "FAQs" in the main menu
+   - First create categories under the "Faq Category" tab
+   - Then add FAQs under the "Faq Question" tab
+   - Assign each FAQ to a category
+
+2. **Creating an FAQ Page**:
+   - Create a new page of type "FAQ Page"
+   - Go to the "FAQCategories" tab
+   - Select which categories you want to display on this page
+   - Categories are displayed in the order they were added
+
+## Template Customization
+
+The default FAQ page template (`templates/Restruct/FAQ/Pages/Layout/FAQPage.ss`) uses **Bootstrap 5 accordion** components to display FAQs in an expandable/collapsible format.
+
+### Requirements
+
+- Bootstrap 5.x CSS and JavaScript must be included in your theme
+- The template uses Bootstrap classes: `accordion`, `accordion-item`, `accordion-header`, `accordion-button`, `accordion-collapse`, `accordion-body`
+
+### Customizing the Template
+
+You can customize the FAQ display in two ways:
+
+1. **Override the template**: Create your own template in your theme directory:
+   ```
+   themes/your-theme/templates/Restruct/FAQ/Pages/Layout/FAQPage.ss
+   ```
+
+2. **Use a different CSS framework**: Copy the template and replace Bootstrap accordion markup with your preferred implementation (e.g., custom JavaScript, Tailwind CSS, etc.)
+
+### Template Structure
+
+The template provides two main methods:
+- `$CategoriesWithFaqs`: Returns categories with their associated FAQs grouped together
+- `$AllFaqs`: Returns all FAQs for the selected categories (ungrouped)
+
+Refer to the default template for implementation examples.

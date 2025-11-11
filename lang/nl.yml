@@ -1,0 +1,27 @@
+nl:
+  Restruct\FAQ\Model\FaqQuestion:
+    SINGULARNAME: 'FAQ'
+    PLURALNAME: 'FAQ''s'
+    Question: 'Vraag'
+    Answer: 'Antwoord'
+    SortOrder: 'Sorteervolgorde'
+    FaqCategories: 'FAQ Categorieën'
+    NoCategoriesAssigned: 'Geen categorieën toegewezen'
+    GridFieldTitle: 'FAQ Vragen'
+
+  Restruct\FAQ\Model\FaqCategory:
+    SINGULARNAME: 'FAQ Categorie'
+    PLURALNAME: 'FAQ Categorieën'
+    Title: 'Titel'
+    Faqs: 'FAQ''s'
+    GridFieldTitle: 'FAQ Vragen'
+
+  Restruct\FAQ\Pages\FAQPage:
+    SINGULARNAME: 'FAQ Pagina'
+    PLURALNAME: 'FAQ Pagina''s'
+    DESCRIPTION: 'Een pagina die veelgestelde vragen toont, georganiseerd per categorie'
+    FaqCategories: 'FAQ Categorieën'
+    NoFaqsMessage: 'Er zijn nog geen FAQ''s toegevoegd aan deze pagina.'
+
+  Restruct\FAQ\Admin\FAQAdmin:
+    MENUTITLE: 'FAQ''s'
