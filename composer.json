@@ -21,5 +21,10 @@
       "Restruct\\FAQ\\": "src/"
     }
   },
+  "extra": {
+    "expose": [
+      "client"
+    ]
+  },
   "minimum-stability": "stable"
 }

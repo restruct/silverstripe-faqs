@@ -3,6 +3,7 @@
 namespace Restruct\FAQ\Pages;
 
 use Restruct\FAQ\Model\FaqQuestion;
+use Restruct\FAQ\PageControllers\FAQPageController;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\View\ArrayData;
 use SilverStripe\ORM\DataList;
@@ -15,6 +16,12 @@ use Symbiote\GridFieldExtensions\GridFieldOrderableRows;
 
 class FAQPage extends Page
 {
+    /**
+     * @var string
+     * @config
+     */
+    private static $controller_name = FAQPageController::class;
+
     /**
      * @var string
      * @config

@@ -8,6 +8,7 @@ use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
 use SilverStripe\Forms\HTMLEditor\HTMLEditorField;
 use SilverStripe\Forms\TextField;
 use SilverStripe\ORM\DataObject;
+use SilverStripe\Security\SecurityToken;
 
 class FaqQuestion extends DataObject
 {
@@ -31,6 +32,7 @@ class FaqQuestion extends DataObject
         'Question'  => 'Varchar(255)',
         'Answer'    => 'HTMLText',
         'SortOrder' => 'Int',
+        'ViewCount' => 'Int',
     ];
 
     /**
@@ -47,6 +49,7 @@ class FaqQuestion extends DataObject
      */
     private static $summary_fields = [
         'Question',
+        'ViewCount',
         'CategoriesList',
     ];
 
@@ -70,6 +73,7 @@ class FaqQuestion extends DataObject
         $labels['Question'] = _t(__CLASS__ . '.Question', 'Question');
         $labels['Answer'] = _t(__CLASS__ . '.Answer', 'Answer');
         $labels['SortOrder'] = _t(__CLASS__ . '.SortOrder', 'Sort Order');
+        $labels['ViewCount'] = _t(__CLASS__ . '.ViewCount', 'View Count');
         $labels['FaqCategories'] = _t(__CLASS__ . '.FaqCategories', 'FAQ Categories');
         $labels['CategoriesList'] = _t(__CLASS__ . '.FaqCategories', 'FAQ Categories');
 
@@ -84,7 +88,9 @@ class FaqQuestion extends DataObject
         $fields = parent::getCMSFields();
 
         // Remove SortOrder - managed automatically by GridFieldOrderableRows
+        // Remove ViewCount - managed automatically by frontend tracking
         $fields->removeByName('SortOrder');
+        $fields->removeByName('ViewCount');
         $fields->removeByName('FaqCategories');
 
         // Make Question field a TextField
@@ -150,5 +156,16 @@ class FaqQuestion extends DataObject
             $maxSort = static::get()->max('SortOrder');
             $this->SortOrder = $maxSort ? $maxSort + 1 : 1;
         }
+    }
+
+    /**
+     * Get a secure token for tracking views
+     * This token is used to validate AJAX requests for incrementing view counts
+     * @return string
+     */
+    public function getViewToken()
+    {
+        $token = SecurityToken::inst();
+        return $token->getValue();
     }
 }

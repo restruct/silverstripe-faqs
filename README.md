@@ -36,23 +36,44 @@ vendor/bin/sake dev/build flush=1
 
 ## Template Customization
 
-The default FAQ page template (`templates/Restruct/FAQ/Pages/Layout/FAQPage.ss`) uses **Bootstrap 5 accordion** components to display FAQs in an expandable/collapsible format.
+The default FAQ page template (`templates/Restruct/FAQ/Pages/Layout/FAQPage.ss`) uses a **custom accordion** implementation with vanilla JavaScript and CSS - no external dependencies required.
 
-### Requirements
+### Client Assets
 
-- Bootstrap 5.x CSS and JavaScript must be included in your theme
-- The template uses Bootstrap classes: `accordion`, `accordion-item`, `accordion-header`, `accordion-button`, `accordion-collapse`, `accordion-body`
+The module includes the following client-side files:
+
+1. **faq-accordion.js**: Core accordion functionality
+   - Handles expand/collapse behavior
+   - Dispatches `faq:opened` custom events for tracking
+   - Keyboard navigation support
+
+2. **faq-view-tracker.js**: Analytics tracking
+   - Tracks when users open FAQ items
+   - CSRF token protection
+   - Session-based deduplication
+
+3. **faq-accordion.css**: Accordion styling
+   - Clean, modern design
+   - Smooth transitions
+   - Mobile responsive
 
 ### Customizing the Template
 
-You can customize the FAQ display in two ways:
+You can customize the FAQ display in several ways:
 
 1. **Override the template**: Create your own template in your theme directory:
    ```
    themes/your-theme/templates/Restruct/FAQ/Pages/Layout/FAQPage.ss
    ```
 
-2. **Use a different CSS framework**: Copy the template and replace Bootstrap accordion markup with your preferred implementation (e.g., custom JavaScript, Tailwind CSS, etc.)
+2. **Override the styles**: Override CSS variables or classes in your theme's stylesheet
+
+3. **Extend functionality**: Listen to the `faq:opened` custom event to add your own behavior:
+   ```javascript
+   document.addEventListener('faq:opened', function(event) {
+       console.log('FAQ opened:', event.detail.faqId);
+   });
+   ```
 
 ### Template Structure
 
