@@ -5,6 +5,7 @@ en:
     Question: 'Question'
     Answer: 'Answer'
     SortOrder: 'Sort Order'
+    ViewCount: 'View Count'
     FaqCategories: 'FAQ Categories'
     NoCategoriesAssigned: 'No categories assigned'
     GridFieldTitle: 'FAQ Questions'

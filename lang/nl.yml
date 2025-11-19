@@ -5,6 +5,7 @@ nl:
     Question: 'Vraag'
     Answer: 'Antwoord'
     SortOrder: 'Sorteervolgorde'
+    ViewCount: 'Aantal weergaven'
     FaqCategories: 'FAQ Categorieën'
     NoCategoriesAssigned: 'Geen categorieën toegewezen'
     GridFieldTitle: 'FAQ Vragen'
