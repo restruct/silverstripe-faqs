@@ -1,0 +1,8 @@
+---
+Name: faq-routes
+After:
+  - '#coreroutes'
+---
+SilverStripe\Control\Director:
+  rules:
+    'faq-api': 'Restruct\FAQ\Controllers\FaqApiController'

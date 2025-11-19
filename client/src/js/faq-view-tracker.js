@@ -49,8 +49,8 @@
         formData.append('faqId', faqId);
         formData.append(tokenName, securityToken);
 
-        // Send AJAX request
-        fetch(window.location.pathname + '/incrementView', {
+        // Send AJAX request to dedicated API endpoint
+        fetch('/faq-api/incrementView', {
             method: 'POST',
             body: formData,
             headers: {

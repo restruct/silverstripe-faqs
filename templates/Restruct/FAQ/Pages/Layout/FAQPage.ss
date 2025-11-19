@@ -20,13 +20,13 @@
                                         class="faq-toggle"
                                         type="button"
                                         aria-expanded="false"
-                                        aria-controls="faq-answer-{$ID}"
+                                        aria-controls="faq-answer-{$Up.Category.ID}-{$ID}"
                                         data-faq-id="{$ID}"
                                         data-security-token="{$ViewToken}">
                                         $Question
                                     </button>
                                 </h3>
-                                <div id="faq-answer-{$ID}" class="faq-answer" hidden>
+                                <div id="faq-answer-{$Up.Category.ID}-{$ID}" class="faq-answer" hidden>
                                     <div class="faq-answer-content">
                                         $Answer
                                     </div>
