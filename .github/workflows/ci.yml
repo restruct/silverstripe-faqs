@@ -213,14 +213,30 @@ jobs:
         # array-valued keys, skipping scalars, and it cannot see a renamed private static the
         # class still declares (FAQPage's $description/$icon_class): those are pinned by the
         # unit tests.
+        # "Mentions this module" is decided by a diff, not by grepping for the module's name:
+        # an audit line names the class that lacks the property, so a key this module sets on
+        # a CORE class (it sets SilverStripe\Control\Director.rules in _config/routes.yml)
+        # would never contain "restruct". The baseline is the same host audited with the
+        # module's _config moved aside; any line only the real run prints comes from this
+        # module's YAML. Whatever core itself reports (today mimevalidator's $MimeTypes) is in
+        # both runs, so core drift cannot turn this red.
+        # shell: bash runs with -e and pipefail, and every sake call writes to a file with
+        # stderr included, so a crashing config:audit fails the step instead of passing it
+        # silently through a pipe.
         working-directory: app-host
+        shell: bash
         run: |
           if [ "${{ matrix.silverstripe }}" = "5" ]; then
             vendor/bin/sake dev/build flush=1
           else
             vendor/bin/sake db:build --flush
-            vendor/bin/sake config:audit | tee config-audit.txt
-            if grep -i 'restruct' config-audit.txt; then
+            MOD=vendor/restruct/silverstripe-faq
+            mv "$MOD/_config" "$MOD/_config.audit-off"
+            vendor/bin/sake config:audit --flush > config-audit-base.txt 2>&1
+            mv "$MOD/_config.audit-off" "$MOD/_config"
+            vendor/bin/sake config:audit --flush > config-audit.txt 2>&1
+            cat config-audit.txt
+            if comm -13 <(sort -u config-audit-base.txt) <(sort -u config-audit.txt) | grep .; then
               echo "config:audit reports configuration from restruct/silverstripe-faq (above)"
               exit 1
             fi
