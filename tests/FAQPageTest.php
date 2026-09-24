@@ -148,17 +148,17 @@ class FAQPageTest extends SapphireTest
     public function testCategoriesWithFaqsTieBreaksOnTheQuestionOrderNotTheID(): void
     {
         $shipping = $this->objFromFixture(FaqQuestion::class, 'q_shipping');
-        $returns = $this->objFromFixture(FaqQuestion::class, 'q_returns');
+        $warranty = $this->objFromFixture(FaqQuestion::class, 'q_warranty');
         // Guard the fixture's premise: ID order and own SortOrder order must disagree.
-        $this->assertLessThan($returns->ID, $shipping->ID);
-        $this->assertLessThan($shipping->SortOrder, $returns->SortOrder);
+        $this->assertLessThan($warranty->ID, $shipping->ID);
+        $this->assertLessThan($shipping->SortOrder, $warranty->SortOrder);
 
         $item = $this->objFromFixture(FAQPage::class, 'page_never_dragged_inverted')
             ->getCategoriesWithFaqs()->first();
 
-        // Join SortOrder is 0 for both; own SortOrder returns 10, shipping 30.
+        // Join SortOrder is 0 for both; own SortOrder warranty 5, shipping 30.
         $this->assertSame(
-            ['Can I return an item?', 'How long does shipping take?'],
+            ['Is there a warranty?', 'How long does shipping take?'],
             $item->Faqs->column('Question')
         );
     }
