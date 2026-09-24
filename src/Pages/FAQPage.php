@@ -10,6 +10,7 @@ use Restruct\FAQ\PageControllers\FAQPageController;
 //use SilverStripe\ORM\ArrayList;
 //use SilverStripe\View\ArrayData;
 use SilverStripe\ORM\DataList;
+use SilverStripe\ORM\DataObject;
 use Restruct\FAQ\Model\FaqCategory;
 use Page;
 use SilverStripe\Forms\FieldList;
@@ -144,8 +145,21 @@ class FAQPage extends Page
             return null;
         }
 
-        return FaqQuestion::get()
+        // A question in two of the selected categories came back twice when this list was the
+        // filter-through-the-join query itself:
+        //return FaqQuestion::get()
+        //    ->filter('FaqCategories.ID', $categoryIDs)
+        //    ->sort('SortOrder ASC');
+        // So the join only collects the IDs, and the list returned is a plain one on
+        // FaqQuestion, sorted by the question's own SortOrder as before.
+        $faqIDs = FaqQuestion::get()
             ->filter('FaqCategories.ID', $categoryIDs)
+            ->columnUnique('ID');
+
+        // filter() rejects an empty set; ID 0 never exists, so selected categories without any
+        // questions give an empty list rather than an exception.
+        return FaqQuestion::get()
+            ->filter('ID', $faqIDs ?: [0])
             ->sort('SortOrder ASC');
     }
 
@@ -161,7 +175,19 @@ class FAQPage extends Page
         $categories = $this->FaqCategories()->sort('SortOrder ASC');
 
         foreach ($categories as $category) {
-            $faqs = $category->Faqs()->sort('SortOrder ASC');
+            // 'SortOrder' alone resolves to FaqQuestion.SortOrder, not to the category's own
+            // order, so dragging questions in a category's GridField (which writes the join
+            // table's SortOrder) never changed the page:
+            //$faqs = $category->Faqs()->sort('SortOrder ASC');
+            // The join table's SortOrder leads; the question's own SortOrder breaks ties, which
+            // keeps the old order for a category whose questions were never dragged (all 0).
+            $faqs = $category->Faqs();
+            $faqs = $faqs->orderBy(sprintf(
+                '"%1$s"."SortOrder" ASC, "%2$s"."SortOrder" ASC, "%2$s"."ID" ASC',
+                $faqs->getJoinTable(),
+                // Looked up rather than hard-coded: table_name is config a project can change.
+                DataObject::getSchema()->tableName(FaqQuestion::class)
+            ));
 
             if ($faqs->count() > 0) {
                 $result->push($this->createArrayData([
