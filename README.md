@@ -130,15 +130,20 @@ The template provides two main methods:
 Refer to the default template for implementation examples.
 
 To keep the accordion and view counting working in your own template, render each question's
-toggle exactly as the default template does. The scripts bind to nothing else, and a toggle that
-misses one of these fails silently (no console error, ViewCount stays 0):
+toggle as the default template does. The scripts bind to nothing else:
 
 - the class `faq-toggle` on the button (the accordion binds only to `.faq-toggle`);
-- `aria-expanded="false"` on the button (the accordion reads and toggles it);
 - `aria-controls` holding the `id` of the answer element, which starts `hidden` (the accordion
   finds the answer only through it; the view is counted only when an answer opens);
 - `data-faq-id="{$ID}"` and `data-security-token="{$ViewToken}"` on the button (sent with the
-  view-count request).
+  view-count request);
+- `aria-expanded="false"` on the button is recommended for accessibility. The script does not
+  need it: it treats a missing value as collapsed, so the first click still opens the answer.
+
+A toggle without the `faq-toggle` class or a matching `aria-controls` target fails silently: the
+answer does not open, there is no console error and ViewCount stays 0. A toggle missing either
+`data-*` attribute still opens, but the tracker logs `FAQ tracking: Missing FAQ ID or security
+token` to the console and counts nothing.
 
 ## View counting
 
