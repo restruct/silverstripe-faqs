@@ -29,7 +29,7 @@ Silverstripe 5, `^5` on Silverstripe 6), for the drag-sortable GridFields.
 
 **Silverstripe 6:** TinyMCE is a separate module there and `silverstripe/recipe-cms` does not
 include it. Without `silverstripe/htmleditor-tinymce` installed, the Answer field is not a rich-text
-editor. Most Silverstripe 6 projects already require it.
+editor. Most Silverstripe 6 projects already require it; the module lists it under `suggest`.
 
 ## Installation
 

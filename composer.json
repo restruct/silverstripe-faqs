@@ -23,6 +23,9 @@
   "require-dev": {
     "silverstripe/recipe-testing": "^3 || ^4"
   },
+  "suggest": {
+    "silverstripe/htmleditor-tinymce": "Silverstripe 6 only: makes the FAQ Answer field a rich-text editor (recipe-cms 6 does not include it)"
+  },
   "autoload": {
     "psr-4": {
       "Restruct\\FAQ\\": "src/"
