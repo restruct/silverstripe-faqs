@@ -142,8 +142,10 @@ jobs:
           <!-- Warning-to-error escalation is the RUNNER's behaviour and differs by PHPUnit
                major: 9 (SS5) converts warnings by default, 11 (SS6) has no such attribute.
                failOnWarning is pinned so a warning behaves identically on every leg. -->
+          <!-- failOnEmptyTestSuite: a suite that silently collects zero tests (a moved
+               directory, a broken autoload) must go red, not report OK. -->
           <phpunit bootstrap="vendor/silverstripe/framework/tests/bootstrap.php" colors="true"
-                   failOnWarning="true">
+                   failOnWarning="true" failOnEmptyTestSuite="true">
               <testsuites>
                   <testsuite name="faq">
                       <directory>vendor/restruct/silverstripe-faq/tests</directory>
@@ -190,26 +192,38 @@ jobs:
         #   failOnWarning.
         # - SS6 (framework 6, PHPUnit 11): a `flush=1` argument no longer works; framework 6 reads
         #   SS_PHPUNIT_FLUSH instead, which also combines with --testsuite.
+        # --fail-on-empty-test-suite on every leg, on top of the phpunit.xml attribute: a run
+        # that collects no tests exits non-zero instead of passing. PHPUnit 9.6 accepts the
+        # option although its --help does not list it.
         run: |
           if [ "${{ matrix.silverstripe }}" = "5" ]; then
-            vendor/bin/phpunit vendor/restruct/silverstripe-faq/tests flush=1
-            vendor/bin/phpunit app/tests flush=1
+            vendor/bin/phpunit --fail-on-empty-test-suite vendor/restruct/silverstripe-faq/tests flush=1
+            vendor/bin/phpunit --fail-on-empty-test-suite app/tests flush=1
           else
-            SS_PHPUNIT_FLUSH=1 vendor/bin/phpunit --testsuite faq
-            SS_PHPUNIT_FLUSH=1 vendor/bin/phpunit --testsuite consumer
+            SS_PHPUNIT_FLUSH=1 vendor/bin/phpunit --fail-on-empty-test-suite --testsuite faq
+            SS_PHPUNIT_FLUSH=1 vendor/bin/phpunit --fail-on-empty-test-suite --testsuite consumer
           fi
 
       - name: Boot the app and build the database
         # The suite proves the classes behave; this proves the module does not break a real
-        # boot. The SS6 leg also runs config:audit, which reports configuration set on a class
-        # that no longer reads it - the shape of the SS6 description/icon renames.
+        # boot. The SS6 leg also runs config:audit, which lists YAML config set on a class that
+        # declares no such property (e.g. a key this module sets on a core class after core
+        # dropped it). config:audit itself always exits 0, so the step fails on its own when the
+        # audit mentions this module. Its limits (framework 6 ConfigAudit): it only reports
+        # array-valued keys, skipping scalars, and it cannot see a renamed private static the
+        # class still declares (FAQPage's $description/$icon_class): those are pinned by the
+        # unit tests.
         working-directory: app-host
         run: |
           if [ "${{ matrix.silverstripe }}" = "5" ]; then
             vendor/bin/sake dev/build flush=1
           else
             vendor/bin/sake db:build --flush
-            vendor/bin/sake config:audit
+            vendor/bin/sake config:audit | tee config-audit.txt
+            if grep -i 'restruct' config-audit.txt; then
+              echo "config:audit reports configuration from restruct/silverstripe-faq (above)"
+              exit 1
+            fi
           fi
 
   lint:
