@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 (unreleased)
+## 1.1.0 (2026-09-25)
 
 Silverstripe 6 support, on the same line as Silverstripe 5. No breaking changes: a 1.0.x
 installation on Silverstripe 5 can update in place.
@@ -16,7 +16,11 @@ The repository had no open or closed GitHub issues or pull requests at the time 
   Silverstripe 5 (PHP 8.1, 8.3) and Silverstripe 6 (PHP 8.3, 8.4), plus a real `dev/build` /
   `db:build` and, on 6, `config:audit`.
 - `composer.json` declares `php: ^8.1` (it declared none before), `license: MIT` (matching the
-  LICENSE file already in the repository) and a `funding` link.
+  LICENSE file already in the repository) and a `funding` link. The licence itself is unchanged;
+  the LICENSE copyright lines now name every holder: Restruct web & apps and the two outside
+  contributors whose code the module contains (it read "2025 Restruct web & apps" before).
+- `composer.json` suggests `silverstripe/htmleditor-tinymce`, which Silverstripe 6 needs for a
+  rich-text Answer field.
 - `CLASS_DESCRIPTION` translation keys for the page type (en, nl), which Silverstripe 5.4 and 6
   look up. The older `DESCRIPTION` keys stay for 5.0-5.3.
 
@@ -45,7 +49,8 @@ The repository had no open or closed GitHub issues or pull requests at the time 
 
 - README: requirements and compatibility table, installation for both majors, ordering rules,
   the view-counting endpoint and its responses, every config option with its default, and how to
-  run the tests. Removed the claim that categories show "in the order they were added" (they
+  run the tests, and every attribute a custom FAQ template must keep for the accordion and view
+  counting to work. Removed the claim that categories show "in the order they were added" (they
   have always been drag-sortable) and the `composer dump-autoload` installation step.
 
 ## 1.0.0 - 1.0.5 (November 2025)
