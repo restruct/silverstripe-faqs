@@ -203,15 +203,23 @@ class FAQPageTest extends SapphireTest
         $this->assertStringContainsString('data-faq-id="' . $shipping->ID . '"', $html);
 
         // $Up.Category.ID inside the nested loop: the answer id carries the CATEGORY's ID, so a
-        // question listed in two categories still gets two distinct ids.
-        $this->assertStringContainsString(
-            'id="faq-answer-' . $orders->ID . '-' . $shipping->ID . '"',
-            $html
-        );
-        $this->assertStringContainsString(
-            'aria-controls="faq-answer-' . $orders->ID . '-' . $shipping->ID . '"',
-            $html
-        );
+        // question listed in two categories still gets two distinct ids. q_returns is in both
+        // categories. The guards below keep the assertions able to fail: with a category ID equal
+        // to the question ID, "{$Up.Category.ID}-{$ID}" and "{$ID}-{$ID}" render the same.
+        $money = $this->objFromFixture(FaqCategory::class, 'cat_money');
+        $returns = $this->objFromFixture(FaqQuestion::class, 'q_returns');
+        $this->assertNotEquals($orders->ID, $returns->ID);
+        $this->assertNotEquals($orders->ID, $money->ID);
+        foreach ([$orders, $money] as $category) {
+            $this->assertStringContainsString(
+                'id="faq-answer-' . $category->ID . '-' . $returns->ID . '"',
+                $html
+            );
+            $this->assertStringContainsString(
+                'aria-controls="faq-answer-' . $category->ID . '-' . $returns->ID . '"',
+                $html
+            );
+        }
 
         // Categories render in the page's order, not by Title.
         $this->assertLessThan(strpos($html, 'Alpha money'), strpos($html, 'Zulu orders'));
