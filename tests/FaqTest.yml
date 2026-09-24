@@ -57,6 +57,14 @@ Restruct\FAQ\Model\FaqCategory:
     Faqs:
       - =>Restruct\FAQ\Model\FaqQuestion.q_elsewhere
       - =>Restruct\FAQ\Model\FaqQuestion.q_shipping
+  cat_never_dragged_inverted:
+    Title: 'Never dragged, own order against ID order'
+    # Join SortOrder left at 0 again, but here the questions' own SortOrder (returns 10,
+    # shipping 30) runs AGAINST their ID order (shipping is created first), so only the
+    # question-SortOrder tie-break can put returns first; an ID tie-break alone puts shipping first.
+    Faqs:
+      - =>Restruct\FAQ\Model\FaqQuestion.q_shipping
+      - =>Restruct\FAQ\Model\FaqQuestion.q_returns
 
 Restruct\FAQ\Pages\FAQPage:
   page:
@@ -82,3 +90,8 @@ Restruct\FAQ\Pages\FAQPage:
     URLSegment: 'faq-never-dragged'
     FaqCategories:
       - =>Restruct\FAQ\Model\FaqCategory.cat_never_dragged
+  page_never_dragged_inverted:
+    Title: 'An FAQ page on a category nobody sorted, own order against ID order'
+    URLSegment: 'faq-never-dragged-inverted'
+    FaqCategories:
+      - =>Restruct\FAQ\Model\FaqCategory.cat_never_dragged_inverted

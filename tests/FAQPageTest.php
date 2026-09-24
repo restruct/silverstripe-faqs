@@ -139,6 +139,30 @@ class FAQPageTest extends SapphireTest
         );
     }
 
+    /**
+     * The question's own SortOrder, not its ID, is the tie-break for a never-dragged category.
+     * The fixture above cannot tell the two apart (its ID order equals its SortOrder order), so
+     * this one inverts them: dropping the question-SortOrder term from the orderBy would silently
+     * reorder every never-dragged category on existing installs to insert order.
+     */
+    public function testCategoriesWithFaqsTieBreaksOnTheQuestionOrderNotTheID(): void
+    {
+        $shipping = $this->objFromFixture(FaqQuestion::class, 'q_shipping');
+        $returns = $this->objFromFixture(FaqQuestion::class, 'q_returns');
+        // Guard the fixture's premise: ID order and own SortOrder order must disagree.
+        $this->assertLessThan($returns->ID, $shipping->ID);
+        $this->assertLessThan($shipping->SortOrder, $returns->SortOrder);
+
+        $item = $this->objFromFixture(FAQPage::class, 'page_never_dragged_inverted')
+            ->getCategoriesWithFaqs()->first();
+
+        // Join SortOrder is 0 for both; own SortOrder returns 10, shipping 30.
+        $this->assertSame(
+            ['Can I return an item?', 'How long does shipping take?'],
+            $item->Faqs->column('Question')
+        );
+    }
+
     public function testCategoriesWithFaqsIsEmptyWithoutCategories(): void
     {
         $result = $this->objFromFixture(FAQPage::class, 'page_without_categories')->getCategoriesWithFaqs();
