@@ -1,11 +1,13 @@
 {
   "name": "restruct/silverstripe-faq",
-  "description": "Silverstripe FAQ Module",
+  "description": "Silverstripe FAQ module: categorised questions and answers, managed in a ModelAdmin and shown on an FAQ page as an accordion, with per-question view counting",
   "type": "silverstripe-vendormodule",
   "keywords": [
+    "silverstripe",
     "faq",
     "frequently asked questions"
   ],
+  "license": "MIT",
   "authors": [
     {
       "name": "Restruct",
@@ -13,12 +15,25 @@
     }
   ],
   "require": {
-    "silverstripe/cms": "^5.0",
-    "symbiote/silverstripe-gridfieldextensions": "^4.0"
+    "php": "^8.1",
+    "silverstripe/vendor-plugin": "^2 || ^3",
+    "silverstripe/cms": "^5 || ^6",
+    "symbiote/silverstripe-gridfieldextensions": "^4 || ^5"
+  },
+  "require-dev": {
+    "silverstripe/recipe-testing": "^3 || ^4"
+  },
+  "suggest": {
+    "silverstripe/htmleditor-tinymce": "Silverstripe 6 only: makes the FAQ Answer field a rich-text editor (recipe-cms 6 does not include it)"
   },
   "autoload": {
     "psr-4": {
       "Restruct\\FAQ\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Restruct\\FAQ\\Tests\\": "tests/"
     }
   },
   "extra": {
@@ -26,5 +41,11 @@
       "client"
     ]
   },
+  "funding": [
+    {
+      "type": "github",
+      "url": "https://github.com/sponsors/restruct"
+    }
+  ],
   "minimum-stability": "stable"
 }

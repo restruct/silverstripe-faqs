@@ -21,6 +21,7 @@ nl:
     SINGULARNAME: 'FAQ Pagina'
     PLURALNAME: 'FAQ Pagina''s'
     DESCRIPTION: 'Een pagina die veelgestelde vragen toont, georganiseerd per categorie'
+    CLASS_DESCRIPTION: 'Een pagina die veelgestelde vragen toont, georganiseerd per categorie'
     FaqCategories: 'FAQ Categorieën'
     NoFaqsMessage: 'Er zijn nog geen FAQ''s toegevoegd aan deze pagina.'
 

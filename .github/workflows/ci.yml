@@ -1,0 +1,261 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: SS${{ matrix.silverstripe }} / PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # One job per supported Silverstripe major, at the oldest and newest PHP that major
+          # is used with here. The module's composer.json is the source of truth for the
+          # supported range; this matrix must follow it.
+          - silverstripe: '5'
+            php: '8.1'
+            recipe: '^5'
+            testing: '^3'
+          - silverstripe: '5'
+            php: '8.3'
+            recipe: '^5'
+            testing: '^3'
+          - silverstripe: '6'
+            php: '8.3'
+            recipe: '^6'
+            testing: '^4'
+          - silverstripe: '6'
+            php: '8.4'
+            recipe: '^6'
+            testing: '^4'
+
+    services:
+      database:
+        # MariaDB rather than MySQL: it matches both the local dev machine and the
+        # Forge servers, so a version-specific failure here means something real.
+        image: mariadb:11.4
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: ss_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    env:
+      SS_DATABASE_CLASS: MySQLDatabase
+      SS_DATABASE_SERVER: 127.0.0.1
+      SS_DATABASE_PORT: 3306
+      SS_DATABASE_USERNAME: root
+      SS_DATABASE_PASSWORD: root
+      SS_DATABASE_NAME: ss_ci
+      SS_ENVIRONMENT_TYPE: dev
+
+    steps:
+      - name: Check out the module
+        uses: actions/checkout@v4
+        with:
+          path: module
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, intl, pdo_mysql, mysqli, gd, zip, dom, xml, tokenizer, simplexml, ctype, hash, session
+          tools: composer:v2
+          coverage: none
+
+      - name: Build a host project
+        # The module cannot be tested on its own: it needs a booted Silverstripe app.
+        # The module is required through a PATH repository pointing at the checkout, and
+        # symlinked rather than mirrored ON PURPOSE - `/tests` is `export-ignore` in
+        # .gitattributes, so a dist or mirrored install contains no tests at all.
+        run: |
+          mkdir -p app-host
+          cd app-host
+          cat > composer.json <<JSON
+          {
+            "name": "restruct/ci-host",
+            "require": {
+              "silverstripe/recipe-cms": "${{ matrix.recipe }}",
+              "silverstripe/recipe-testing": "${{ matrix.testing }}",
+              "restruct/silverstripe-faq": "*"
+            },
+            "repositories": [
+              { "type": "path", "url": "../module", "options": { "symlink": true } }
+            ],
+            "autoload-dev": {
+              "psr-4": {
+                "Restruct\\\\FAQ\\\\Tests\\\\": "vendor/restruct/silverstripe-faq/tests/"
+              }
+            },
+            "minimum-stability": "dev",
+            "prefer-stable": true,
+            "config": { "allow-plugins": true }
+          }
+          JSON
+          # Every Silverstripe 5 release is covered by advisory PKSA-pjvm-vnw2-n3m2
+          # (range <6.2.1), which will not be patched on the 5 line, so Composer refuses to
+          # install it under the default policy. Disabled HERE ONLY, in a throwaway CI host.
+          composer config policy.advisories.block false
+          composer update --no-interaction --no-progress
+
+      - name: Give the host a Page and PageController
+        # FAQPage extends the project's Page, and FAQPageController its PageController, exactly
+        # as a real site provides them. recipe-cms does not ship them, and without a Page class
+        # the config manifest fatals on FAQPage at the first flush.
+        run: |
+          mkdir -p app-host/app/src app-host/app/_config
+          cat > app-host/app/src/Page.php <<'PHP'
+          <?php
+
+          use SilverStripe\CMS\Model\SiteTree;
+
+          class Page extends SiteTree
+          {
+          }
+          PHP
+          cat > app-host/app/src/PageController.php <<'PHP'
+          <?php
+
+          use SilverStripe\CMS\Controllers\ContentController;
+
+          class PageController extends ContentController
+          {
+          }
+          PHP
+          # An app/_config dir makes app/ a module, so its classes are in the manifest.
+          printf -- "---\nName: ci-host\n---\n" > app-host/app/_config/app.yml
+
+      - name: Configure the test suite
+        run: |
+          cd app-host
+          cat > phpunit.xml <<'XML'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!-- Warning-to-error escalation is the RUNNER's behaviour and differs by PHPUnit
+               major: 9 (SS5) converts warnings by default, 11 (SS6) has no such attribute.
+               failOnWarning is pinned so a warning behaves identically on every leg. -->
+          <!-- failOnEmptyTestSuite: a suite that silently collects zero tests (a moved
+               directory, a broken autoload) must go red, not report OK. -->
+          <phpunit bootstrap="vendor/silverstripe/framework/tests/bootstrap.php" colors="true"
+                   failOnWarning="true" failOnEmptyTestSuite="true">
+              <testsuites>
+                  <testsuite name="faq">
+                      <directory>vendor/restruct/silverstripe-faq/tests</directory>
+                  </testsuite>
+                  <testsuite name="consumer">
+                      <directory>app/tests</directory>
+                  </testsuite>
+              </testsuites>
+          </phpunit>
+          XML
+
+      - name: Add a consumer-shape database test
+        # A module's own suite cannot catch a test fixture that breaks CONSUMING projects (its
+        # fixtures are loaded by PHPUnit, never registered in the class manifest, so no tables
+        # are built from them). This test runs from the host with the module installed.
+        run: |
+          mkdir -p app-host/app/tests
+          cat > app-host/app/tests/ConsumerDbTest.php <<'PHP'
+          <?php
+
+          use SilverStripe\Dev\SapphireTest;
+          use SilverStripe\Security\Member;
+
+          class ConsumerDbTest extends SapphireTest
+          {
+              protected $usesDatabase = true;
+
+              public function testTempDatabaseBuilds()
+              {
+                  $m = Member::create(['FirstName' => 'x']);
+                  $m->write();
+                  $this->assertGreaterThan(0, $m->ID);
+              }
+          }
+          PHP
+
+      - name: Run tests
+        working-directory: app-host
+        # Every run flushes the test manifest, and how differs per major:
+        # - SS5 (framework 5, PHPUnit 9): SS_PHPUNIT_FLUSH does not exist in framework 5, so it
+        #   would be inert. The flush is a trailing `flush=1` argument, which only works AFTER an
+        #   explicit test path - `--testsuite x flush=1` makes PHPUnit 9 open "flush=1" as a file
+        #   and fail. So the SS5 legs run by path; phpunit.xml still supplies bootstrap and
+        #   failOnWarning.
+        # - SS6 (framework 6, PHPUnit 11): a `flush=1` argument no longer works; framework 6 reads
+        #   SS_PHPUNIT_FLUSH instead, which also combines with --testsuite.
+        # --fail-on-empty-test-suite on every leg, on top of the phpunit.xml attribute: a run
+        # that collects no tests exits non-zero instead of passing. PHPUnit 9.6 accepts the
+        # option although its --help does not list it.
+        run: |
+          if [ "${{ matrix.silverstripe }}" = "5" ]; then
+            vendor/bin/phpunit --fail-on-empty-test-suite vendor/restruct/silverstripe-faq/tests flush=1
+            vendor/bin/phpunit --fail-on-empty-test-suite app/tests flush=1
+          else
+            SS_PHPUNIT_FLUSH=1 vendor/bin/phpunit --fail-on-empty-test-suite --testsuite faq
+            SS_PHPUNIT_FLUSH=1 vendor/bin/phpunit --fail-on-empty-test-suite --testsuite consumer
+          fi
+
+      - name: Boot the app and build the database
+        # The suite proves the classes behave; this proves the module does not break a real
+        # boot. The SS6 leg also runs config:audit, which lists YAML config set on a class that
+        # declares no such property (e.g. a key this module sets on a core class after core
+        # dropped it). config:audit itself always exits 0, so the step fails on its own when the
+        # audit mentions this module. Its limits (framework 6 ConfigAudit): it only reports
+        # array-valued keys, skipping scalars, and it cannot see a renamed private static the
+        # class still declares (FAQPage's $description/$icon_class): those are pinned by the
+        # unit tests.
+        # "Mentions this module" is decided by a diff, not by grepping for the module's name:
+        # an audit line names the class that lacks the property, so a key this module sets on
+        # a CORE class (it sets SilverStripe\Control\Director.rules in _config/routes.yml)
+        # would never contain "restruct". The baseline is the same host audited with the
+        # module's _config moved aside; any line only the real run prints comes from this
+        # module's YAML. Whatever core itself reports (today mimevalidator's $MimeTypes) is in
+        # both runs, so core drift cannot turn this red.
+        # shell: bash runs with -e and pipefail, and every sake call writes to a file with
+        # stderr included, so a crashing config:audit fails the step instead of passing it
+        # silently through a pipe.
+        working-directory: app-host
+        shell: bash
+        run: |
+          if [ "${{ matrix.silverstripe }}" = "5" ]; then
+            vendor/bin/sake dev/build flush=1
+          else
+            vendor/bin/sake db:build --flush
+            MOD=vendor/restruct/silverstripe-faq
+            mv "$MOD/_config" "$MOD/_config.audit-off"
+            vendor/bin/sake config:audit --flush > config-audit-base.txt 2>&1
+            mv "$MOD/_config.audit-off" "$MOD/_config"
+            vendor/bin/sake config:audit --flush > config-audit.txt 2>&1
+            cat config-audit.txt
+            if comm -13 <(sort -u config-audit-base.txt) <(sort -u config-audit.txt) | grep .; then
+              echo "config:audit reports configuration from restruct/silverstripe-faq (above)"
+              exit 1
+            fi
+          fi
+
+  lint:
+    name: Lint PHP ${{ matrix.php }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The floor of the module's declared php constraint, and the newest PHP the supported
+        # Silverstripe majors run on.
+        php: ['8.1', '8.3', '8.4']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+      - name: Syntax check every PHP file
+        run: find src tests -name '*.php' -print0 | xargs -0 -n1 php -l

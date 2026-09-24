@@ -1,0 +1,103 @@
+# Shared fixture for the FAQ suite.
+# Targets of a => reference are declared before the records that reference them.
+# SortOrder values are deliberately NOT in insertion/alphabetical order, so a test that passes
+# only because rows happen to come back in ID or Title order cannot pass here.
+Restruct\FAQ\Model\FaqQuestion:
+  q_shipping:
+    Question: 'How long does shipping take?'
+    Answer: '<p>Three to five working days.</p>'
+    SortOrder: 30
+  q_returns:
+    Question: 'Can I return an item?'
+    Answer: '<p>Within 30 days.</p>'
+    SortOrder: 10
+  q_payment:
+    Question: 'Which payment methods do you accept?'
+    Answer: '<p>iDEAL and credit card.</p>'
+    SortOrder: 20
+  q_orphan:
+    Question: 'A question in no category'
+    Answer: '<p>Never shown on a page.</p>'
+    SortOrder: 40
+  q_elsewhere:
+    Question: 'A question only in a category the page does not show'
+    Answer: '<p>Not on this page.</p>'
+    SortOrder: 50
+  # Declared last, so its ID is the highest, while its own SortOrder is the lowest: see
+  # cat_never_dragged_inverted. Below the fixture maximum of 50, which a model test relies on.
+  q_warranty:
+    Question: 'Is there a warranty?'
+    Answer: '<p>Two years.</p>'
+    SortOrder: 5
+
+Restruct\FAQ\Model\FaqCategory:
+  # Title order (Alpha, Beta, Empty, Zulu) differs from the order the page assigns below.
+  cat_orders:
+    Title: 'Zulu orders'
+    Faqs:
+      # Join-table SortOrder deliberately inverts the questions' own SortOrder (30, 10),
+      # so the category's ordering can only come from the relation.
+      - =>Restruct\FAQ\Model\FaqQuestion.q_shipping:
+          SortOrder: 1
+      - =>Restruct\FAQ\Model\FaqQuestion.q_returns:
+          SortOrder: 2
+  cat_money:
+    Title: 'Alpha money'
+    Faqs:
+      - =>Restruct\FAQ\Model\FaqQuestion.q_payment:
+          SortOrder: 1
+      # The same question in a second category: getAllFaqs() must still list it once.
+      - =>Restruct\FAQ\Model\FaqQuestion.q_returns:
+          SortOrder: 2
+  cat_empty:
+    Title: 'Empty category'
+  cat_other:
+    Title: 'Beta other'
+    Faqs:
+      - =>Restruct\FAQ\Model\FaqQuestion.q_elsewhere:
+          SortOrder: 1
+  cat_never_dragged:
+    Title: 'Never dragged'
+    # Join SortOrder left at 0 for every question, as on an install where nobody has used the
+    # drag handles yet: the questions' own SortOrder (elsewhere 50, shipping 30) must decide.
+    Faqs:
+      - =>Restruct\FAQ\Model\FaqQuestion.q_elsewhere
+      - =>Restruct\FAQ\Model\FaqQuestion.q_shipping
+  cat_never_dragged_inverted:
+    Title: 'Never dragged against ID order'
+    # Join SortOrder left at 0 again, but here the questions' own SortOrder (warranty 5,
+    # shipping 30) runs AGAINST their ID order (shipping is created first), so only the
+    # question-SortOrder tie-break can put warranty first; an ID tie-break alone puts shipping first.
+    Faqs:
+      - =>Restruct\FAQ\Model\FaqQuestion.q_shipping
+      - =>Restruct\FAQ\Model\FaqQuestion.q_warranty
+
+Restruct\FAQ\Pages\FAQPage:
+  page:
+    Title: 'Frequently asked questions'
+    URLSegment: 'faq'
+    FaqCategories:
+      - =>Restruct\FAQ\Model\FaqCategory.cat_money:
+          SortOrder: 2
+      - =>Restruct\FAQ\Model\FaqCategory.cat_empty:
+          SortOrder: 3
+      - =>Restruct\FAQ\Model\FaqCategory.cat_orders:
+          SortOrder: 1
+  page_without_categories:
+    Title: 'An FAQ page with nothing selected'
+    URLSegment: 'faq-empty'
+  page_with_only_an_empty_category:
+    Title: 'An FAQ page whose only category has no questions'
+    URLSegment: 'faq-empty-category'
+    FaqCategories:
+      - =>Restruct\FAQ\Model\FaqCategory.cat_empty
+  page_never_dragged:
+    Title: 'An FAQ page on a category nobody sorted'
+    URLSegment: 'faq-never-dragged'
+    FaqCategories:
+      - =>Restruct\FAQ\Model\FaqCategory.cat_never_dragged
+  page_never_dragged_inverted:
+    Title: 'An FAQ page on a category nobody sorted, against ID order'
+    URLSegment: 'faq-never-dragged-inverted'
+    FaqCategories:
+      - =>Restruct\FAQ\Model\FaqCategory.cat_never_dragged_inverted
