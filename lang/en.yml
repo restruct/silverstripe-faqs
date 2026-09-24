@@ -21,6 +21,7 @@ en:
     SINGULARNAME: 'FAQ Page'
     PLURALNAME: 'FAQ Pages'
     DESCRIPTION: 'A page that displays frequently asked questions organized by categories'
+    CLASS_DESCRIPTION: 'A page that displays frequently asked questions organized by categories'
     FaqCategories: 'FAQ Categories'
     NoFaqsMessage: 'No FAQs have been added to this page yet.'
 

@@ -4,8 +4,11 @@ namespace Restruct\FAQ\Pages;
 
 use Restruct\FAQ\Model\FaqQuestion;
 use Restruct\FAQ\PageControllers\FAQPageController;
-use SilverStripe\ORM\ArrayList;
-use SilverStripe\View\ArrayData;
+// ArrayList/ArrayData are no longer imported: Silverstripe 6 moved them (ORM\ArrayList ->
+// Model\List\ArrayList, View\ArrayData -> Model\ArrayData) and left no alias behind, so the
+// class is resolved per major - see createArrayList()/createArrayData().
+//use SilverStripe\ORM\ArrayList;
+//use SilverStripe\View\ArrayData;
 use SilverStripe\ORM\DataList;
 use Restruct\FAQ\Model\FaqCategory;
 use Page;
@@ -41,12 +44,35 @@ class FAQPage extends Page
     private static $plural_name = 'FAQ Pages';
 
     /**
+     * Page-type description in the "add page" dialog. Read by Silverstripe 6, and by 5.4, which
+     * prefers it over the deprecated $description below.
+     *
+     * @var string
+     * @config
+     */
+    private static $class_description = 'A page that displays frequently asked questions organized by categories';
+
+    /**
+     * Silverstripe 5 before 5.4 reads only this name; Silverstripe 6 renamed it to
+     * $class_description and ignores it. Delete when the module drops ^5.
+     *
      * @var string
      * @config
      */
     private static $description = 'A page that displays frequently asked questions organized by categories';
 
     /**
+     * Site-tree icon on Silverstripe 6 (renamed from $icon_class there).
+     *
+     * @var string
+     * @config
+     */
+    private static $cms_icon_class = 'font-icon-help-circled';
+
+    /**
+     * Site-tree icon on Silverstripe 5, which knows no other name. Silverstripe 6 ignores it.
+     * Delete when the module drops ^5.
+     *
      * @var string
      * @config
      */
@@ -125,11 +151,11 @@ class FAQPage extends Page
 
     /**
      * Get categories with their FAQs grouped
-     * @return ArrayList
+     * @return \SilverStripe\ORM\ArrayList|\SilverStripe\Model\List\ArrayList
      */
     public function getCategoriesWithFaqs()
     {
-        $result = ArrayList::create();
+        $result = $this->createArrayList();
 
         // Sort categories by the SortOrder from the many_many relation
         $categories = $this->FaqCategories()->sort('SortOrder ASC');
@@ -138,7 +164,7 @@ class FAQPage extends Page
             $faqs = $category->Faqs()->sort('SortOrder ASC');
 
             if ($faqs->count() > 0) {
-                $result->push(ArrayData::create([
+                $result->push($this->createArrayData([
                     'Category' => $category,
                     'Faqs' => $faqs,
                 ]));
@@ -146,5 +172,33 @@ class FAQPage extends Page
         }
 
         return $result;
+    }
+
+    /**
+     * An empty ArrayList of whichever class the running Silverstripe major provides.
+     *
+     * @return \SilverStripe\ORM\ArrayList|\SilverStripe\Model\List\ArrayList
+     */
+    protected function createArrayList()
+    {
+        // Class names as strings, without a leading backslash: class_exists() on a name that
+        // does not exist on this major is simply false, and the string never needs an import.
+        $class = class_exists('SilverStripe\\Model\\List\\ArrayList')
+            ? 'SilverStripe\\Model\\List\\ArrayList'   # Silverstripe 6
+            : 'SilverStripe\\ORM\\ArrayList';         # Silverstripe 5
+        return $class::create();
+    }
+
+    /**
+     * An ArrayData of whichever class the running Silverstripe major provides.
+     *
+     * @return \SilverStripe\View\ArrayData|\SilverStripe\Model\ArrayData
+     */
+    protected function createArrayData(array $data)
+    {
+        $class = class_exists('SilverStripe\\Model\\ArrayData')
+            ? 'SilverStripe\\Model\\ArrayData'        # Silverstripe 6
+            : 'SilverStripe\\View\\ArrayData';        # Silverstripe 5
+        return $class::create($data);
     }
 }
