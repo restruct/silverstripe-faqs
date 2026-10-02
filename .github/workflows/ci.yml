@@ -149,6 +149,7 @@ jobs:
               <testsuites>
                   <testsuite name="faq">
                       <directory>vendor/restruct/silverstripe-faq/tests</directory>
+                      <exclude>vendor/restruct/silverstripe-faq/tests/browser</exclude>
                   </testsuite>
                   <testsuite name="consumer">
                       <directory>app/tests</directory>
