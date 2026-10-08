@@ -114,6 +114,27 @@ test('the tracker posts to the URL the template renders, not to a fixed path (#2
     expect((await request.response())?.status()).toBe(200);
 });
 
+test('without the URL attribute the tracker posts under the page <base href> (#2)', async ({ page }) => {
+    await page.goto(FAQ_PAGE);
+    const button = toggle(category(page, 'Billing'), 'How do I pay?');
+    // A custom template that predates data-view-tracking-url, on a site whose <base href> carries
+    // a subdirectory. The marked base does not exist on the scratch host, so the request is
+    // answered here instead (a 404 would be logged as a console error).
+    await button.evaluate((el) => el.removeAttribute('data-view-tracking-url'));
+    await page.evaluate(() => {
+        const base = document.querySelector('base') ?? document.head.appendChild(document.createElement('base'));
+        base.setAttribute('href', `${location.origin}/marked-base/`);
+    });
+    await page.route('**/marked-base/faq-api/incrementView', (route) =>
+        route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true, viewCount: 1, alreadyCounted: false }) }));
+
+    const [request] = await Promise.all([
+        page.waitForRequest((r) => r.method() === 'POST' && r.url().includes('faq-api/incrementView')),
+        button.click(),
+    ]);
+    expect(new URL(request.url()).pathname).toBe('/marked-base/faq-api/incrementView');
+});
+
 test('a counted view logs nothing to the console (#4)', async ({ page }) => {
     // Every console message, not only errors (the console guard in support.ts covers those).
     const logged: string[] = [];
