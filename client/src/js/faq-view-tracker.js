@@ -71,13 +71,15 @@
                 trackedFaqs.add(faqId);
 
                 // Optional: Log for debugging (remove in production)
-                if (window.console && console.log) {
-                    console.log('FAQ view tracked:', {
-                        faqId: faqId,
-                        viewCount: data.viewCount,
-                        alreadyCounted: data.alreadyCounted
-                    });
-                }
+                // Disabled: it logged on every tracked view, on live sites too (#4). Uncomment
+                // locally when debugging the tracker.
+                //if (window.console && console.log) {
+                //    console.log('FAQ view tracked:', {
+                //        faqId: faqId,
+                //        viewCount: data.viewCount,
+                //        alreadyCounted: data.alreadyCounted
+                //    });
+                //}
             }
         })
         .catch(function(error) {

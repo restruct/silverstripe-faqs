@@ -114,6 +114,19 @@ test('the tracker posts to the URL the template renders, not to a fixed path (#2
     expect((await request.response())?.status()).toBe(200);
 });
 
+test('a counted view logs nothing to the console (#4)', async ({ page }) => {
+    // Every console message, not only errors (the console guard in support.ts covers those).
+    const logged: string[] = [];
+    page.on('console', (m) => logged.push(`${m.type()}: ${m.text()}`));
+    await page.goto(FAQ_PAGE);
+
+    const { json } = await waitForView(page, () => toggle(category(page, 'Billing'), 'Can I get an invoice?').click());
+    expect(json.success).toBe(true);
+    // The log call ran in the fetch's .then(), after the response; give it a moment to land.
+    await page.waitForTimeout(200);
+    expect(logged).toEqual([]);
+});
+
 test('the view API refuses a request without a valid token', async ({ page }) => {
     await page.goto(FAQ_PAGE);
     const faqId = await toggle(category(page, 'Billing'), 'How do I pay?').getAttribute('data-faq-id');

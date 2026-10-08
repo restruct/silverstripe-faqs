@@ -14,6 +14,8 @@
   the fixed path `/faq-api/incrementView`. It now posts to the toggle's `data-view-tracking-url`;
   a custom template without that attribute falls back to the page's `<base href>`, then to the
   old root path. Custom templates should add the attribute (README, "Template Structure").
+- The view tracker no longer writes `FAQ view tracked: ...` to the browser console on every
+  counted view (#4). Errors are still reported with `console.error`.
 
 - **Concurrent views of one question could lose counts, and every counted view bumped the
   question's `LastEdited`** (#3). `incrementView` read `ViewCount`, added one in PHP and called
