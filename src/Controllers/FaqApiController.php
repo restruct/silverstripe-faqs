@@ -6,6 +6,9 @@ use Restruct\FAQ\Model\FaqQuestion;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\Queries\SQLSelect;
+use SilverStripe\ORM\Queries\SQLUpdate;
 use SilverStripe\Security\SecurityToken;
 
 /**
@@ -74,8 +77,20 @@ class FaqApiController extends Controller
         }
 
         // Increment view count
-        $faq->ViewCount = $faq->ViewCount ? $faq->ViewCount + 1 : 1;
-        $faq->write();
+        # Read-add-write lost increments when two views of one question overlapped (both read the
+        # same value), and write() bumped LastEdited on every view (#3):
+        //$faq->ViewCount = $faq->ViewCount ? $faq->ViewCount + 1 : 1;
+        //$faq->write();
+        # One atomic UPDATE instead: the database adds one to whatever value it holds at that
+        # moment, and no write() means LastEdited and the write hooks stay untouched. COALESCE keeps
+        # the old code's "empty counts as 0": NULL + 1 would stay NULL.
+        $table = sprintf('"%s"', DataObject::getSchema()->tableName(FaqQuestion::class));
+        SQLUpdate::create($table, ['"ViewCount"' => ['COALESCE("ViewCount", 0) + 1' => []]], ['"ID"' => $faqId])
+            ->execute();
+        # Re-read for the response: the in-memory $faq still holds the value from before the update.
+        $faq->ViewCount = (int) SQLSelect::create('"ViewCount"', $table, ['"ID"' => $faqId])
+            ->execute()
+            ->value();
 
         // Mark as viewed in session
         $viewedFaqs[] = $faqId;

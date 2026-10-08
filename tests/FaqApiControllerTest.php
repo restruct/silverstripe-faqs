@@ -3,6 +3,10 @@
 namespace Restruct\FAQ\Tests;
 
 use Restruct\FAQ\Model\FaqQuestion;
+use Restruct\FAQ\Tests\Stubs\ConcurrentViewExtension;
+use SilverStripe\ORM\DataObject;
+use SilverStripe\ORM\Queries\SQLSelect;
+use SilverStripe\ORM\Queries\SQLUpdate;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Dev\FunctionalTest;
 use SilverStripe\Security\SecurityToken;
@@ -13,6 +17,10 @@ use SilverStripe\Security\SecurityToken;
 class FaqApiControllerTest extends FunctionalTest
 {
     protected static $fixture_file = 'FaqTest.yml';
+
+    protected static $required_extensions = [
+        FaqQuestion::class => [ConcurrentViewExtension::class],
+    ];
 
     private const TOKEN = 'faq-test-token';
 
@@ -34,6 +42,8 @@ class FaqApiControllerTest extends FunctionalTest
         // FunctionalTest::tearDown() re-enables tokens anyway; restated so this class leaves the
         // global state as it found it however the parent changes.
         SecurityToken::enable();
+        ConcurrentViewExtension::$armed = false;
+        ConcurrentViewExtension::$injected = 0;
         parent::tearDown();
     }
 
@@ -131,5 +141,37 @@ class FaqApiControllerTest extends FunctionalTest
         $this->assertSame(1, $this->viewCount('q_returns'));
         $this->assertSame(1, $this->viewCount('q_payment'));
         $this->assertSame(0, $this->viewCount('q_shipping'));
+    }
+
+    /**
+     * #3: a view counted by another request while this one is being handled must not be lost.
+     * The extension lands that other increment between this request's read and its update.
+     */
+    public function testAConcurrentViewIsNotLost(): void
+    {
+        ConcurrentViewExtension::$armed = true;
+
+        $response = $this->postView($this->idFromFixture(FaqQuestion::class, 'q_returns'));
+
+        $this->assertSame(200, $response->getStatusCode());
+        // Our view plus every concurrent one that landed: none may be overwritten.
+        $this->assertSame(1 + ConcurrentViewExtension::$injected, $this->viewCount('q_returns'));
+    }
+
+    /**
+     * #3: counting a view is not an edit, so LastEdited keeps its value.
+     */
+    public function testCountingAViewLeavesLastEditedAlone(): void
+    {
+        $id = $this->idFromFixture(FaqQuestion::class, 'q_returns');
+        $table = sprintf('"%s"', DataObject::getSchema()->tableName(FaqQuestion::class));
+        // A fixed timestamp in the past, so "unchanged" cannot pass by landing in the same second.
+        SQLUpdate::create($table, ['"LastEdited"' => '2020-01-02 03:04:05'], ['"ID"' => $id])->execute();
+
+        $this->postView($id);
+
+        $lastEdited = SQLSelect::create('"LastEdited"', $table, ['"ID"' => $id])->execute()->value();
+        $this->assertSame('2020-01-02 03:04:05', $lastEdited);
+        $this->assertSame(1, $this->viewCount('q_returns'));
     }
 }

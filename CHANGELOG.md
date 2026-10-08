@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 (unreleased)
+
+### Fixed
+
+- **Concurrent views of one question could lose counts, and every counted view bumped the
+  question's `LastEdited`** (#3). `incrementView` read `ViewCount`, added one in PHP and called
+  `write()`. It now increments in a single SQL `UPDATE`, so overlapping views all count, and
+  `LastEdited` changes only when the question is edited. Since no `write()` happens any more,
+  `onBeforeWrite`/`onAfterWrite` hooks on `FaqQuestion` no longer run when a view is counted.
+
 ## 1.1.0 (2026-09-25)
 
 Silverstripe 6 support, on the same line as Silverstripe 5. No breaking changes: a 1.0.x
