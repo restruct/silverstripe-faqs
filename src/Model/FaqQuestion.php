@@ -2,6 +2,9 @@
 
 namespace Restruct\FAQ\Model;
 
+use Restruct\FAQ\Controllers\FaqApiController;
+use SilverStripe\Control\Controller;
+use SilverStripe\Control\Director;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
@@ -167,5 +170,22 @@ class FaqQuestion extends DataObject
     {
         $token = SecurityToken::inst();
         return $token->getValue();
+    }
+
+    /**
+     * The URL faq-view-tracker.js posts a view to, rendered into the toggle's
+     * data-view-tracking-url attribute. Root-relative and under the site's base URL, so view
+     * counting also works on a site installed in a subdirectory (#2); the script used to post to
+     * the fixed path /faq-api/incrementView.
+     *
+     * @return string
+     */
+    public function getViewTrackingURL()
+    {
+        # FaqApiController::Link() is its url_segment plus the action, without the base URL.
+        return Controller::join_links(
+            Director::baseURL(),
+            FaqApiController::singleton()->Link('incrementView')
+        );
     }
 }

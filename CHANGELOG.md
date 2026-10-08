@@ -2,7 +2,18 @@
 
 ## 1.2.0 (unreleased)
 
+### Added
+
+- `FaqQuestion::getViewTrackingURL()` (`$ViewTrackingURL` in templates): the view-count endpoint
+  under the site's base URL. The default template renders it as `data-view-tracking-url` on each
+  question's toggle (#2).
+
 ### Fixed
+
+- **View counting did nothing on a site installed in a subdirectory** (#2). The tracker posted to
+  the fixed path `/faq-api/incrementView`. It now posts to the toggle's `data-view-tracking-url`;
+  a custom template without that attribute falls back to the page's `<base href>`, then to the
+  old root path. Custom templates should add the attribute (README, "Template Structure").
 
 - **Concurrent views of one question could lose counts, and every counted view bumped the
   question's `LastEdited`** (#3). `incrementView` read `ViewCount`, added one in PHP and called

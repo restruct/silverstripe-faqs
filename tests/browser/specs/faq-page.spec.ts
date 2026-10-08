@@ -97,6 +97,23 @@ test('opening a question counts one view per visitor session', async ({ page }) 
     expect(again.json).toEqual({ success: true, viewCount: counted, alreadyCounted: true });
 });
 
+test('the tracker posts to the URL the template renders, not to a fixed path (#2)', async ({ page }) => {
+    await page.goto(FAQ_PAGE);
+    const button = toggle(category(page, 'Billing'), 'How do I pay?');
+    // At the domain root the rendered URL is the root path: the scratch host is not in a subdirectory.
+    await expect(button).toHaveAttribute('data-view-tracking-url', '/faq-api/incrementView');
+
+    // A site in a subdirectory renders a different URL into the same attribute. Point it at a
+    // marked URL that still routes, and check the tracker uses it instead of a path of its own.
+    await button.evaluate((el) => el.setAttribute('data-view-tracking-url', '/faq-api/incrementView?from-attribute=1'));
+    const [request] = await Promise.all([
+        page.waitForRequest((r) => r.method() === 'POST' && r.url().includes('/faq-api/')),
+        button.click(),
+    ]);
+    expect(new URL(request.url()).search).toBe('?from-attribute=1');
+    expect((await request.response())?.status()).toBe(200);
+});
+
 test('the view API refuses a request without a valid token', async ({ page }) => {
     await page.goto(FAQ_PAGE);
     const faqId = await toggle(category(page, 'Billing'), 'How do I pay?').getAttribute('data-faq-id');
