@@ -4,6 +4,8 @@ namespace Restruct\FAQ\Tests;
 
 use Restruct\FAQ\Model\FaqCategory;
 use Restruct\FAQ\Model\FaqQuestion;
+use SilverStripe\Control\Director;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\Form;
@@ -174,5 +176,19 @@ class FaqModelTest extends SapphireTest
         $html = (string) $form->Fields()->dataFieldByName('Answer')->Field();
 
         $this->assertStringContainsString('Within 30 days.', html_entity_decode($html));
+    }
+
+    /**
+     * #2: the view-count endpoint, as a root-relative URL under the site's base URL.
+     */
+    public function testViewTrackingURLFollowsTheBaseURL(): void
+    {
+        $question = $this->objFromFixture(FaqQuestion::class, 'q_returns');
+
+        Config::modify()->set(Director::class, 'alternate_base_url', '/');
+        $this->assertSame('/faq-api/incrementView', $question->getViewTrackingURL());
+
+        Config::modify()->set(Director::class, 'alternate_base_url', '/sub/');
+        $this->assertSame('/sub/faq-api/incrementView', $question->getViewTrackingURL());
     }
 }

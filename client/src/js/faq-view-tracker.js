@@ -50,7 +50,9 @@
         formData.append(tokenName, securityToken);
 
         // Send AJAX request to dedicated API endpoint
-        fetch('/faq-api/incrementView', {
+        // A fixed root path missed the endpoint on a site installed in a subdirectory (#2):
+        //fetch('/faq-api/incrementView', {
+        fetch(trackingUrl(button), {
             method: 'POST',
             body: formData,
             headers: {
@@ -69,13 +71,15 @@
                 trackedFaqs.add(faqId);
 
                 // Optional: Log for debugging (remove in production)
-                if (window.console && console.log) {
-                    console.log('FAQ view tracked:', {
-                        faqId: faqId,
-                        viewCount: data.viewCount,
-                        alreadyCounted: data.alreadyCounted
-                    });
-                }
+                // Disabled: it logged on every tracked view, on live sites too (#4). Uncomment
+                // locally when debugging the tracker.
+                //if (window.console && console.log) {
+                //    console.log('FAQ view tracked:', {
+                //        faqId: faqId,
+                //        viewCount: data.viewCount,
+                //        alreadyCounted: data.alreadyCounted
+                //    });
+                //}
             }
         })
         .catch(function(error) {
@@ -84,6 +88,29 @@
                 console.error('FAQ tracking error:', error);
             }
         });
+    }
+
+    /**
+     * The URL to post a view to.
+     * 1. data-view-tracking-url on the button, which the default template renders under the
+     *    site's base URL;
+     * 2. else, for a custom template without that attribute, faq-api/incrementView resolved
+     *    against an explicit <base href> (Silverstripe's <% base_tag %>), which carries the base URL;
+     * 3. else the root path, as before, which is right for a site at the domain root.
+     * @param {HTMLElement} button - The accordion button element
+     * @returns {string}
+     */
+    function trackingUrl(button) {
+        const fromTemplate = button.getAttribute('data-view-tracking-url');
+        if (fromTemplate) {
+            return fromTemplate;
+        }
+        // Only an explicit <base>: without one document.baseURI is the page URL itself, and a
+        // relative path would resolve below the FAQ page.
+        if (document.querySelector('base[href]')) {
+            return new URL('faq-api/incrementView', document.baseURI).href;
+        }
+        return '/faq-api/incrementView';
     }
 
     // Initialize when DOM is ready

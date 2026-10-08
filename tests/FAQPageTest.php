@@ -7,6 +7,8 @@ use Restruct\FAQ\Model\FaqQuestion;
 use Restruct\FAQ\PageControllers\FAQPageController;
 use Restruct\FAQ\Pages\FAQPage;
 use SilverStripe\CMS\Controllers\CMSMain;
+use SilverStripe\Control\Director;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\ORM\DB;
@@ -256,5 +258,20 @@ class FAQPageTest extends SapphireTest
         $html = (string) FAQPageController::create($page)->renderWith(['type' => 'Layout', FAQPage::class]);
 
         $this->assertStringContainsString('No FAQs have been added to this page yet.', $html);
+    }
+
+    /**
+     * #2: the tracker posts to the URL the template renders, which carries the site's base URL,
+     * so view counting also works on a site installed in a subdirectory.
+     */
+    public function testLayoutTemplateRendersTheViewTrackingURLUnderTheBaseURL(): void
+    {
+        Config::modify()->set(Director::class, 'alternate_base_url', '/sub/');
+        $page = $this->objFromFixture(FAQPage::class, 'page');
+
+        $html = (string) FAQPageController::create($page)->renderWith(['type' => 'Layout', FAQPage::class]);
+
+        $this->assertStringContainsString('data-view-tracking-url="/sub/faq-api/incrementView"', $html);
+        $this->assertStringNotContainsString('data-view-tracking-url="/faq-api/', $html);
     }
 }

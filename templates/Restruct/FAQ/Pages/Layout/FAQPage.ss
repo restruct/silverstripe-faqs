@@ -22,7 +22,8 @@
                                         aria-expanded="false"
                                         aria-controls="faq-answer-{$Up.Category.ID}-{$ID}"
                                         data-faq-id="{$ID}"
-                                        data-security-token="{$ViewToken}">
+                                        data-security-token="{$ViewToken}"
+                                        data-view-tracking-url="{$ViewTrackingURL}">
                                         $Question
                                     </button>
                                 </h3>

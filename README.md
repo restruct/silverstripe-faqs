@@ -137,6 +137,10 @@ toggle as the default template does. The scripts bind to nothing else:
   finds the answer only through it; the view is counted only when an answer opens);
 - `data-faq-id="{$ID}"` and `data-security-token="{$ViewToken}"` on the button (sent with the
   view-count request);
+- `data-view-tracking-url="{$ViewTrackingURL}"` on the button: the endpoint the view is posted
+  to, under the site's base URL. Without it the script falls back to `faq-api/incrementView`
+  resolved against the page's `<base href>` (`<% base_tag %>`), and to `/faq-api/incrementView`
+  when the page has no `<base>` element;
 - `aria-expanded="false"` on the button is recommended for accessibility. The script does not
   need it: it treats a missing value as collapsed, so the first click still opens the answer.
 
@@ -147,8 +151,9 @@ token` to the console and counts nothing.
 
 ## View counting
 
-`faq-view-tracker.js` posts to `faq-api/incrementView` (routed to `FaqApiController` in
-`_config/routes.yml`) when a question is opened. The endpoint accepts only `POST` with a valid
+`faq-view-tracker.js` posts to `faq-api/incrementView` under the site's base URL (routed to
+`FaqApiController` in `_config/routes.yml`; the template renders the URL into
+`data-view-tracking-url`) when a question is opened. The endpoint accepts only `POST` with a valid
 `SecurityID` token, counts a question at most once per session, and answers JSON:
 
 | Response | When |
@@ -162,8 +167,14 @@ token` to the console and counts nothing.
 
 The count is shown in the "FAQs" admin list (`ViewCount`) and is not editable in the CMS.
 
-The script posts to the absolute path `/faq-api/incrementView`, so view counting assumes the site
-runs at the domain root.
+The count is raised with one SQL `UPDATE`, not a `write()`: concurrent views all count, and
+`LastEdited` and the write hooks are left alone. On a site that adds `Versioned` with stages to
+`FaqQuestion`, the Live table is raised too. An `onBeforeIncrementView($faq)` extension hook on
+`FaqApiController` runs just before a view is counted.
+
+To move the endpoint, change `FaqApiController.url_segment` together with the route in
+`_config/routes.yml`: the URL rendered into `data-view-tracking-url` is built from `url_segment`,
+while the route decides what actually answers.
 
 ## Configuration
 
