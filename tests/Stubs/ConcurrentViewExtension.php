@@ -10,8 +10,13 @@ use SilverStripe\ORM\Queries\SQLUpdate;
 
 /**
  * Simulates a second visitor's view being counted while the endpoint handles the first one
- * (#3): just before a FaqQuestion is written, another request's increment lands in the database.
- * A read-ViewCount-add-one-write() endpoint then overwrites it with its stale value plus one.
+ * (#3). Applied to FaqApiController, it lands another request's increment in the database through
+ * the onBeforeIncrementView hook: after the endpoint has loaded the question (and with it the
+ * ViewCount it then holds), before it counts this view. An endpoint that counts from that loaded
+ * value instead of in the database overwrites the other request's increment.
+ *
+ * It used to hook FaqQuestion::onBeforeWrite(), which the atomic endpoint never calls, so it could
+ * only fail the old read-add-write() code and stayed green for a non-atomic SQL update.
  *
  * Only armed while a test sets $armed, and fires once, so it never affects other tests.
  */
@@ -23,7 +28,10 @@ class ConcurrentViewExtension extends Extension implements TestOnly
     /** @var int how many concurrent increments were injected */
     public static $injected = 0;
 
-    protected function onBeforeWrite()
+    /**
+     * @param FaqQuestion $faq the question as the endpoint loaded it
+     */
+    protected function onBeforeIncrementView($faq)
     {
         if (!static::$armed) {
             return;
@@ -35,7 +43,7 @@ class ConcurrentViewExtension extends Extension implements TestOnly
         SQLUpdate::create(
             sprintf('"%s"', $table),
             ['"ViewCount"' => ['"ViewCount" + 1' => []]],
-            ['"ID"' => $this->owner->ID]
+            ['"ID"' => $faq->ID]
         )->execute();
     }
 }

@@ -167,6 +167,15 @@ token` to the console and counts nothing.
 
 The count is shown in the "FAQs" admin list (`ViewCount`) and is not editable in the CMS.
 
+The count is raised with one SQL `UPDATE`, not a `write()`: concurrent views all count, and
+`LastEdited` and the write hooks are left alone. On a site that adds `Versioned` with stages to
+`FaqQuestion`, the Live table is raised too. An `onBeforeIncrementView($faq)` extension hook on
+`FaqApiController` runs just before a view is counted.
+
+To move the endpoint, change `FaqApiController.url_segment` together with the route in
+`_config/routes.yml`: the URL rendered into `data-view-tracking-url` is built from `url_segment`,
+while the route decides what actually answers.
+
 ## Configuration
 
 All options are standard Silverstripe `private static` config, set in YAML:

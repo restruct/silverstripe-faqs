@@ -10,6 +10,7 @@ use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\Queries\SQLSelect;
 use SilverStripe\ORM\Queries\SQLUpdate;
 use SilverStripe\Security\SecurityToken;
+use SilverStripe\Versioned\Versioned;
 
 /**
  * API Controller for FAQ tracking
@@ -81,14 +82,22 @@ class FaqApiController extends Controller
         # same value), and write() bumped LastEdited on every view (#3):
         //$faq->ViewCount = $faq->ViewCount ? $faq->ViewCount + 1 : 1;
         //$faq->write();
+        # Extension point, called once the question is known and before this view is counted.
+        $this->extend('onBeforeIncrementView', $faq);
+
         # One atomic UPDATE instead: the database adds one to whatever value it holds at that
         # moment, and no write() means LastEdited and the write hooks stay untouched. COALESCE keeps
         # the old code's "empty counts as 0": NULL + 1 would stay NULL.
-        $table = sprintf('"%s"', DataObject::getSchema()->tableName(FaqQuestion::class));
-        SQLUpdate::create($table, ['"ViewCount"' => ['COALESCE("ViewCount", 0) + 1' => []]], ['"ID"' => $faqId])
-            ->execute();
+        $tables = $this->viewCountTables();
+        foreach ($tables as $table) {
+            # A question that was never published has no Live row: that UPDATE matches nothing.
+            SQLUpdate::create($table, ['"ViewCount"' => ['COALESCE("ViewCount", 0) + 1' => []]], ['"ID"' => $faqId])
+                ->execute();
+        }
         # Re-read for the response: the in-memory $faq still holds the value from before the update.
-        $faq->ViewCount = (int) SQLSelect::create('"ViewCount"', $table, ['"ID"' => $faqId])
+        # From the stage this request reads (Live on the front end of a versioned site).
+        $readTable = (count($tables) > 1 && Versioned::get_stage() === Versioned::LIVE) ? $tables[1] : $tables[0];
+        $faq->ViewCount = (int) SQLSelect::create('"ViewCount"', $readTable, ['"ID"' => $faqId])
             ->execute()
             ->value();
 
@@ -101,6 +110,27 @@ class FaqApiController extends Controller
             'viewCount' => $faq->ViewCount,
             'alreadyCounted' => false,
         ]);
+    }
+
+    /**
+     * The tables (ANSI quoted) holding a question's ViewCount: the base table, and on a site that
+     * adds Versioned with stages to FaqQuestion also its Live table, which the front end reads.
+     * The raw UPDATE bypasses Versioned, so without the Live table the counts visitors' pages
+     * show would never move.
+     *
+     * @return string[] base table first
+     */
+    protected function viewCountTables()
+    {
+        $table = DataObject::getSchema()->tableForField(FaqQuestion::class, 'ViewCount');
+        $tables = [sprintf('"%s"', $table)];
+
+        $question = FaqQuestion::singleton();
+        if ($question->hasExtension(Versioned::class) && $question->hasStages()) {
+            $tables[] = sprintf('"%s"', $question->stageTable($table, Versioned::LIVE));
+        }
+
+        return $tables;
     }
 
     /**

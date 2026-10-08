@@ -7,6 +7,8 @@
 - `FaqQuestion::getViewTrackingURL()` (`$ViewTrackingURL` in templates): the view-count endpoint
   under the site's base URL. The default template renders it as `data-view-tracking-url` on each
   question's toggle (#2).
+- An `onBeforeIncrementView($faq)` extension hook on `FaqApiController`, called once the question
+  is known and before a view is counted (#3).
 
 ### Fixed
 
@@ -16,12 +18,13 @@
   old root path. Custom templates should add the attribute (README, "Template Structure").
 - The view tracker no longer writes `FAQ view tracked: ...` to the browser console on every
   counted view (#4). Errors are still reported with `console.error`.
-
 - **Concurrent views of one question could lose counts, and every counted view bumped the
   question's `LastEdited`** (#3). `incrementView` read `ViewCount`, added one in PHP and called
   `write()`. It now increments in a single SQL `UPDATE`, so overlapping views all count, and
   `LastEdited` changes only when the question is edited. Since no `write()` happens any more,
   `onBeforeWrite`/`onAfterWrite` hooks on `FaqQuestion` no longer run when a view is counted.
+  On a site that adds `Versioned` with stages to `FaqQuestion`, the Live table is raised as well,
+  so the counts visitors' pages read move too.
 
 ## 1.1.0 (2026-09-25)
 

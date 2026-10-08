@@ -2,6 +2,7 @@
 
 namespace Restruct\FAQ\Tests;
 
+use Restruct\FAQ\Controllers\FaqApiController;
 use Restruct\FAQ\Model\FaqQuestion;
 use Restruct\FAQ\Tests\Stubs\ConcurrentViewExtension;
 use SilverStripe\ORM\DataObject;
@@ -19,7 +20,7 @@ class FaqApiControllerTest extends FunctionalTest
     protected static $fixture_file = 'FaqTest.yml';
 
     protected static $required_extensions = [
-        FaqQuestion::class => [ConcurrentViewExtension::class],
+        FaqApiController::class => [ConcurrentViewExtension::class],
     ];
 
     private const TOKEN = 'faq-test-token';
@@ -145,7 +146,13 @@ class FaqApiControllerTest extends FunctionalTest
 
     /**
      * #3: a view counted by another request while this one is being handled must not be lost.
-     * The extension lands that other increment between this request's read and its update.
+     * The extension lands that other increment after the endpoint loaded the question and before
+     * it counts this view, so counting from the loaded ViewCount (read-add-write(), or an SQL
+     * UPDATE setting loaded value + 1) ends at 1 instead of 2.
+     *
+     * Its limit: it cannot catch a non-atomic version that re-reads ViewCount AFTER the hook and
+     * then writes that value + 1, because nothing can run between that read and that write here.
+     * The atomicity itself rests on the single UPDATE ... SET "ViewCount" = "ViewCount" + 1.
      */
     public function testAConcurrentViewIsNotLost(): void
     {
@@ -154,8 +161,11 @@ class FaqApiControllerTest extends FunctionalTest
         $response = $this->postView($this->idFromFixture(FaqQuestion::class, 'q_returns'));
 
         $this->assertSame(200, $response->getStatusCode());
-        // Our view plus every concurrent one that landed: none may be overwritten.
-        $this->assertSame(1 + ConcurrentViewExtension::$injected, $this->viewCount('q_returns'));
+        // The concurrent increment really landed mid-request (the hook ran), else this proves nothing.
+        $this->assertSame(1, ConcurrentViewExtension::$injected);
+        // The other request's view plus ours: neither may be overwritten.
+        $this->assertSame(2, $this->viewCount('q_returns'));
+        $this->assertSame(2, $this->json($response)['viewCount']);
     }
 
     /**
