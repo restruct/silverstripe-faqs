@@ -117,7 +117,7 @@ class FAQPageTest extends SapphireTest
     /**
      * Regression: getCategoriesWithFaqs() sorted each category's questions by the question's
      * own SortOrder, so dragging questions in the category's GridField (which writes the join
-     * table's SortOrder) never changed the order on the page.
+     * table's SortOrder, FaqSortOrder since 1.3.0) never changed the order on the page.
      */
     public function testCategoriesWithFaqsHonoursTheOrderDraggedInTheCategory(): void
     {
@@ -134,7 +134,7 @@ class FAQPageTest extends SapphireTest
     {
         $item = $this->objFromFixture(FAQPage::class, 'page_never_dragged')->getCategoriesWithFaqs()->first();
 
-        // Join SortOrder is 0 for both, so the questions' own SortOrder decides, as before the fix.
+        // Join FaqSortOrder is 0 for both, so the questions' own SortOrder decides, as before the fix.
         $this->assertSame(
             ['How long does shipping take?', 'A question only in a category the page does not show'],
             $item->Faqs->column('Question')
@@ -158,7 +158,7 @@ class FAQPageTest extends SapphireTest
         $item = $this->objFromFixture(FAQPage::class, 'page_never_dragged_inverted')
             ->getCategoriesWithFaqs()->first();
 
-        // Join SortOrder is 0 for both; own SortOrder warranty 5, shipping 30.
+        // Join FaqSortOrder is 0 for both; own SortOrder warranty 5, shipping 30.
         $this->assertSame(
             ['Is there a warranty?', 'How long does shipping take?'],
             $item->Faqs->column('Question')
@@ -185,7 +185,7 @@ class FAQPageTest extends SapphireTest
 
         [$orders, $money] = $result->toArray();
 
-        // Within a category the relation's SortOrder wins over the questions' own SortOrder
+        // Within a category the relation's FaqSortOrder wins over the questions' own SortOrder
         // (shipping is 30 and returns is 10 on the question, 1 and 2 in the category).
         $this->assertSame(
             ['How long does shipping take?', 'Can I return an item?'],
