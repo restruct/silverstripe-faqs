@@ -179,11 +179,13 @@ class FAQPage extends Page
             // order, so dragging questions in a category's GridField (which writes the join
             // table's SortOrder) never changed the page:
             //$faqs = $category->Faqs()->sort('SortOrder ASC');
-            // The join table's SortOrder leads; the question's own SortOrder breaks ties, which
-            // keeps the old order for a category whose questions were never dragged (all 0).
+            // The join table's FaqSortOrder leads; the question's own SortOrder breaks ties,
+            // which keeps the old order for a category whose questions were never dragged (all 0).
+            // The join field was called SortOrder up to 1.2.0 (see FaqCategory::$many_many_extraFields, #5).
             $faqs = $category->Faqs();
             $faqs = $faqs->orderBy(sprintf(
-                '"%1$s"."SortOrder" ASC, "%2$s"."SortOrder" ASC, "%2$s"."ID" ASC',
+                //'"%1$s"."SortOrder" ASC, "%2$s"."SortOrder" ASC, "%2$s"."ID" ASC',
+                '"%1$s"."FaqSortOrder" ASC, "%2$s"."SortOrder" ASC, "%2$s"."ID" ASC',
                 $faqs->getJoinTable(),
                 // Looked up rather than hard-coded: table_name is config a project can change.
                 DataObject::getSchema()->tableName(FaqQuestion::class)
