@@ -58,14 +58,14 @@ class FqBFaqPage extends FAQPage
             $q[$key]->write();
         }
 
-        # Category "Billing": dragged so that the invoice question comes FIRST (join SortOrder),
-        # against the questions' own order. "Shipping": never dragged (join SortOrder all 0), so the
+        # Category "Billing": dragged so that the invoice question comes FIRST (join FaqSortOrder),
+        # against the questions' own order. "Shipping": never dragged (join FaqSortOrder all 0), so the
         # questions' own order decides. "Shared" is in both categories.
         $billing = FaqCategory::create(['Title' => 'Billing']);
         $billing->write();
-        $billing->Faqs()->add($q['billing-b'], ['SortOrder' => 1]);
-        $billing->Faqs()->add($q['billing-a'], ['SortOrder' => 2]);
-        $billing->Faqs()->add($q['shared'], ['SortOrder' => 3]);
+        $billing->Faqs()->add($q['billing-b'], ['FaqSortOrder' => 1]);
+        $billing->Faqs()->add($q['billing-a'], ['FaqSortOrder' => 2]);
+        $billing->Faqs()->add($q['shared'], ['FaqSortOrder' => 3]);
 
         $shipping = FaqCategory::create(['Title' => 'Shipping']);
         $shipping->write();
@@ -76,9 +76,9 @@ class FqBFaqPage extends FAQPage
         # For the admin drag spec, which reorders it (so the order specs never depend on it).
         $returns = FaqCategory::create(['Title' => 'Returns']);
         $returns->write();
-        $returns->Faqs()->add($q['returns-a'], ['SortOrder' => 1]);
-        $returns->Faqs()->add($q['returns-b'], ['SortOrder' => 2]);
-        $returns->Faqs()->add($q['returns-c'], ['SortOrder' => 3]);
+        $returns->Faqs()->add($q['returns-a'], ['FaqSortOrder' => 1]);
+        $returns->Faqs()->add($q['returns-b'], ['FaqSortOrder' => 2]);
+        $returns->Faqs()->add($q['returns-c'], ['FaqSortOrder' => 3]);
 
         # Not on any page.
         FaqCategory::create(['Title' => 'Unused'])->write();

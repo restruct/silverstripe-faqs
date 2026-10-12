@@ -17,7 +17,7 @@ test('shows the page categories in page order, each with its questions in catego
     // the categories' own default sort is by Title. "Unused" is not on the page. (The admin drag
     // spec reorders Returns, so its questions are not checked here.)
     await expect(page.locator('.faq-category__title')).toHaveText(['Shipping', 'Billing', 'Returns']);
-    // Billing was dragged (join SortOrder) against the questions' own order; Shipping never was,
+    // Billing was dragged (join FaqSortOrder) against the questions' own order; Shipping never was,
     // so the questions' own order (creation order) decides there.
     expect(await questions(category(page, 'Billing'))).toEqual(['Can I get an invoice?', 'How do I pay?', 'How do I contact you?']);
     expect(await questions(category(page, 'Shipping'))).toEqual(['How long does delivery take?', 'Do you ship abroad?', 'How do I contact you?']);

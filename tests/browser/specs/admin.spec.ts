@@ -105,9 +105,9 @@ test('dragging a question within a category reorders it on the FAQ page', async 
     const before = await questionOrder(rows);
 
     // Move the last row to the top, unless that would restore the questions' own order, which
-    // does not save (#5, the fixme spec below); then move the first row to the bottom instead.
-    // Either way the new order differs from the old one and from the own order, so the spec
-    // holds under --repeat-each.
+    // did not save before 1.3.0 and has its own spec below (#5); then move the first row to the
+    // bottom instead. Either way the new order differs from the old one and from the own order,
+    // so the spec holds under --repeat-each.
     const down = rotateDown(before);
     const useDown = down.join() !== RETURNS_OWN_ORDER.join();
     const expected = useDown ? down : rotateUp(before);
@@ -120,10 +120,11 @@ test('dragging a question within a category reorders it on the FAQ page', async 
     expect(onPage).toEqual(expected);
 });
 
-test.fixme('dragging the questions back into creation order is saved (#5)', async ({ page, browser, baseURL }) => {
-    // https://github.com/restruct/silverstripe-faqs/issues/5 - the join field SortOrder clashes
-    // with FaqQuestion.SortOrder, so GridFieldOrderableRows compares the new positions with the
-    // questions' own values and skips every row when the target order is the own order.
+test('dragging the questions back into creation order is saved (#5)', async ({ page, browser, baseURL }) => {
+    // https://github.com/restruct/silverstripe-faqs/issues/5 - up to 1.2.0 the join field was
+    // called SortOrder, like FaqQuestion.SortOrder, so GridFieldOrderableRows compared the new
+    // positions with the questions' own values and skipped every row when the target order was
+    // the own order. The join field is FaqSortOrder since 1.3.0.
     let rows = await openReturnsQuestions(page);
     let current = await questionOrder(rows);
     if (current.join() === RETURNS_OWN_ORDER.join()) {
