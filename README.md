@@ -18,7 +18,7 @@ A Silverstripe module for managing and displaying frequently asked questions (FA
 
 | Branch | Module version | Silverstripe | PHP |
 | ------ | -------------- | ------------ | --- |
-| `main` | `1.1.x` | `^5 \|\| ^6` | `^8.1` (Silverstripe 6 itself needs 8.3+) |
+| `main` | `1.1.x` and later | `^5 \|\| ^6` | `^8.1` (Silverstripe 6 itself needs 8.3+) |
 | (tags only) | `1.0.x` | `^5` | not declared (Silverstripe 5 needs 8.1+) |
 
 `composer.json` is the source of truth. Silverstripe 5 is supported until its end of life in April
@@ -74,6 +74,19 @@ project does).
   created in) decides.
 - **`$AllFaqs`** has no single category to take an order from, so it uses the questions' own
   sort order.
+
+The order within a category is stored on the category-question relation, in the join field
+`FaqSortOrder` (table `FaqCategory_Faqs`). Up to 1.2.0 that field was called `SortOrder`, the
+same name as the question's own field, which made some drags silently not save (#5).
+
+**Upgrading from 1.2 or earlier:** run `dev/build` (`sake db:build` on Silverstripe 6). It adds
+`FaqSortOrder` and copies the order you dragged from the old `SortOrder` column, so every category
+keeps its order. The copy only fills rows whose `FaqSortOrder` is still 0, so it is safe on every
+later build and never undoes a drag. `dev/build` does not drop the old `FaqCategory_Faqs.SortOrder`
+column; nothing reads or writes it any more, and you may drop it by hand once the build has run.
+Project code that reads or writes the join field by name (`->add($question, ['SortOrder' => 1])`,
+`"FaqCategory_Faqs"."SortOrder"` in a sort) must use `FaqSortOrder`. `FAQPage`'s own
+`FaqCategories.SortOrder` (the order of the categories on a page) is unchanged.
 
 ## Template Customization
 
