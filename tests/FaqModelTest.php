@@ -23,7 +23,7 @@ class FaqModelTest extends SapphireTest
     protected static $fixture_file = 'FaqTest.yml';
 
     /**
-     * dev/build must produce both tables and the join table with its SortOrder extra field.
+     * dev/build must produce both tables and the join table with its FaqSortOrder extra field.
      * Checked against the live schema, not against config, so a relation that is declared but
      * never built fails here.
      */
@@ -42,7 +42,9 @@ class FaqModelTest extends SapphireTest
         $this->assertArrayHasKey('Title', $schema->fieldList('FaqCategory'));
 
         $join = $schema->fieldList('FaqCategory_Faqs');
-        foreach (['FaqCategoryID', 'FaqQuestionID', 'SortOrder'] as $field) {
+        # The join field was SortOrder up to 1.2.0; renamed on purpose in 1.3.0 (#5).
+        //foreach (['FaqCategoryID', 'FaqQuestionID', 'SortOrder'] as $field) {
+        foreach (['FaqCategoryID', 'FaqQuestionID', 'FaqSortOrder'] as $field) {
             $this->assertArrayHasKey($field, $join, "FaqCategory_Faqs.$field");
         }
     }
@@ -159,7 +161,9 @@ class FaqModelTest extends SapphireTest
 
         $orderable = $grid->getConfig()->getComponentByType(GridFieldOrderableRows::class);
         $this->assertNotNull($orderable, 'Questions in a category are drag-sortable');
-        $this->assertSame('SortOrder', $orderable->getSortField());
+        # The join field, renamed on purpose in 1.3.0 so it no longer shadows FaqQuestion.SortOrder (#5).
+        //$this->assertSame('SortOrder', $orderable->getSortField());
+        $this->assertSame('FaqSortOrder', $orderable->getSortField());
 
         // The scaffolded relation field is replaced, not duplicated on Root.Faqs.
         $this->assertNull($fields->fieldByName('Root.Faqs'));

@@ -1,5 +1,37 @@
 # Changelog
 
+## 1.3.0 (2026-10-14)
+
+### Fixed
+
+- **Dragging questions within a category was sometimes not saved** (#5). The category's join field
+  for the question order was called `SortOrder`, the same name as `FaqQuestion`'s own field. Read
+  through the relation, a question then carries its own `SortOrder` under that name instead of the
+  category's, and `GridFieldOrderableRows` compared the new positions with those values and skipped
+  rows it had to write. A drag that put the questions back into their own (creation) order was not
+  saved at all: the reorder request still answered 200, and the grid (on Silverstripe 5) and the
+  FAQ page kept the old order.
+
+### Changed
+
+- The join field is now **`FaqSortOrder`** (`FaqCategory::$many_many_extraFields`, table
+  `FaqCategory_Faqs`), in the category's "FAQ Questions" GridField and in
+  `FAQPage::getCategoriesWithFaqs()`. `FAQPage`'s own join field `FaqCategories.SortOrder` keeps
+  its name: `FaqCategory` has no field of that name, so it never clashed.
+
+### Upgrading
+
+- Run `dev/build` (`sake db:build` on Silverstripe 6). `FaqCategory::requireDefaultRecords()`
+  copies the old `FaqCategory_Faqs.SortOrder` values into `FaqSortOrder`, only for rows whose
+  `FaqSortOrder` is still 0 and whose old value is not, so every category keeps the order dragged
+  before the upgrade, and later builds never undo a drag made since.
+- `dev/build` leaves the old `FaqCategory_Faqs.SortOrder` column in place (Silverstripe never drops
+  a column that is no longer configured). Nothing reads or writes it any more; drop it by hand
+  once the build has run, if you like.
+- Project code that names the join field must use `FaqSortOrder`: extra fields passed to
+  `$category->Faqs()->add($question, ['SortOrder' => ...])` are now silently ignored, and a sort on
+  `"FaqCategory_Faqs"."SortOrder"` reads the stale old column.
+
 ## 1.2.0 (2026-10-08)
 
 ### Added
