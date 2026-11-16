@@ -51,6 +51,19 @@ class FAQAdmin extends ModelAdmin
     private static $menu_priority = 3;
 
     /**
+     * Without categories in the CMS (FaqQuestion.show_categories: false) only the questions tab
+     */
+    public function getManagedModels()
+    {
+        $models = parent::getManagedModels();
+        if ( ! FaqQuestion::config()->get('show_categories')) {
+            unset($models[FaqCategory::class]);
+        }
+
+        return $models;
+    }
+
+    /**
      * Remove export, print and import buttons from GridField
      */
     protected function getGridFieldConfig(): GridFieldConfig

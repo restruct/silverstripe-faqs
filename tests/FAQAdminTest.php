@@ -26,6 +26,15 @@ class FAQAdminTest extends SapphireTest
         );
     }
 
+    public function testCategoriesCanBeSwitchedOff(): void
+    {
+        FaqQuestion::config()->set('show_categories', false);
+
+        $this->assertSame([FaqQuestion::class], array_keys(FAQAdmin::singleton()->getManagedModels()));
+        $this->assertArrayNotHasKey('CategoriesList', FaqQuestion::singleton()->summaryFields());
+        $this->assertNull(FaqQuestion::create()->getCMSFields()->fieldByName('Root.Categories'));
+    }
+
     // Two plain test methods rather than a data provider: the provider metadata differs between
     // PHPUnit 9 (SS5, docblock annotation) and PHPUnit 11 (SS6, attribute, annotation deprecated).
     public function testCategoryGridHasNoExportPrintOrImportButtons(): void
