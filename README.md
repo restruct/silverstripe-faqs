@@ -199,10 +199,15 @@ All options are standard Silverstripe `private static` config, set in YAML:
 | | `menu_title` | `FAQs` |
 | | `menu_icon_class` | `font-icon-help-circled` |
 | | `menu_priority` | `3` |
+| `Restruct\FAQ\Model\FaqQuestion` | `show_categories`: categories in the CMS (question tab, list column, admin tab); the relation and `FAQPage` keep working | `true` |
 | `Restruct\FAQ\Pages\FAQPage` | `class_description` (and `description` on Silverstripe 5 before 5.4) | `A page that displays frequently asked questions organized by categories` |
 | | `cms_icon_class` (Silverstripe 6) / `icon_class` (Silverstripe 5) | `font-icon-help-circled` |
 
 The FAQs admin removes the export, print and import buttons from both of its GridFields.
+
+`FaqQuestion::getCMSFields()` makes its own changes (question as a text field, answer editor, Categories tab)
+through `beforeUpdateCMSFields()`, so a project's `updateCMSFields()` extension sees and can change the finished
+form.
 
 ## Running the tests
 
