@@ -5,6 +5,8 @@ namespace Restruct\FAQ\Model;
 use Restruct\FAQ\Controllers\FaqApiController;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
@@ -204,6 +206,11 @@ class FaqQuestion extends DataObject
      */
     public function getViewToken()
     {
+        // Outside a request (CLI tasks, publishing a block that renders questions for the search index) there is
+        // no session to read a token from, and no visitor to count (#8)
+        if (!Injector::inst()->has(HTTPRequest::class) && !Controller::has_curr()) {
+            return '';
+        }
         $token = SecurityToken::inst();
         return $token->getValue();
     }

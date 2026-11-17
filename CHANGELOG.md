@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Fixed
+
+- **`getViewToken()` no longer throws outside a request** (#8): with no session (a CLI task, or publishing a
+  block that renders questions for the search index) it returns an empty token instead of throwing
+  "No HTTPRequest object or controller available yet!". View counting only happens in a browser.
+
 ### Changed
 
 - **Project extensions now see the finished question form.** `FaqQuestion::getCMSFields()` applies its own
