@@ -208,7 +208,9 @@ class FaqQuestion extends DataObject
     {
         // Outside a request (CLI tasks, publishing a block that renders questions for the search index) there is
         // no session to read a token from, and no visitor to count (#8)
-        if (!Injector::inst()->has(HTTPRequest::class) && !Controller::has_curr()) {
+        // has_curr() is gone in SS6 (curr() returns null there); on SS5 it avoids curr()'s warning on an empty stack
+        $controller = (method_exists(Controller::class, 'has_curr') && !Controller::has_curr()) ? null : Controller::curr();
+        if (!Injector::inst()->has(HTTPRequest::class) && !$controller) {
             return '';
         }
         $token = SecurityToken::inst();
