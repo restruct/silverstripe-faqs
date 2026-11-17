@@ -1,5 +1,26 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- **`getViewToken()` no longer throws outside a request** (#8): with no session (a CLI task, or publishing a
+  block that renders questions for the search index) it returns an empty token instead of throwing
+  "No HTTPRequest object or controller available yet!". View counting only happens in a browser.
+
+### Changed
+
+- **Project extensions now see the finished question form.** `FaqQuestion::getCMSFields()` applies its own
+  changes (question as a text field, answer as an HTML editor, the Categories tab) through
+  `beforeUpdateCMSFields()`. They used to run after `updateCMSFields()`, so an extension's changes to the
+  answer field were replaced and it could not remove the Categories tab.
+
+### Added
+
+- **`FaqQuestion.show_categories`** (default `true`): `false` hides categories in the CMS (the question's
+  Categories tab, the categories column and the FAQs admin's categories tab), for sites that only use
+  questions, for example picked by a content block. The relation and `FAQPage` keep working.
+
 ## 1.3.0 (2026-10-14)
 
 ### Fixed

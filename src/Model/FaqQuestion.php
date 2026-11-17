@@ -5,6 +5,8 @@ namespace Restruct\FAQ\Model;
 use Restruct\FAQ\Controllers\FaqApiController;
 use SilverStripe\Control\Controller;
 use SilverStripe\Control\Director;
+use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\GridField\GridField;
 use SilverStripe\Forms\GridField\GridFieldConfig_RelationEditor;
@@ -26,6 +28,15 @@ class FaqQuestion extends DataObject
      * @config
      */
     private static $default_sort = 'SortOrder ASC, ID ASC';
+
+    /**
+     * Categories in the CMS: the question's Categories tab, the summary column and the FAQs admin's
+     * categories tab. Switch off on sites that only use questions (e.g. picked by a content block); the
+     * relation and FAQPage keep working.
+     *
+     * @config
+     */
+    private static $show_categories = true;
 
     /**
      * @var array
@@ -86,10 +97,36 @@ class FaqQuestion extends DataObject
     /**
      * @return FieldList
      */
+    /**
+     * Without categories in the CMS (show_categories: false), no categories column either
+     */
+    public function summaryFields()
+    {
+        $fields = parent::summaryFields();
+        if ( ! static::config()->get('show_categories')) {
+            unset($fields['CategoriesList']);
+        }
+
+        return $fields;
+    }
+
     public function getCMSFields()
     {
-        $fields = parent::getCMSFields();
+        // The module's own field changes run before updateCMSFields(), so a project extension sees (and can
+        // change) the finished form: the answer editor, the Categories tab. They used to run after it and
+        // silently undid an extension's changes to those fields.
+        $this->beforeUpdateCMSFields(function (FieldList $fields) {
+            $this->addModuleCMSFields($fields);
+        });
 
+        return parent::getCMSFields();
+    }
+
+    /**
+     * The module's changes to the scaffolded fields (see getCMSFields())
+     */
+    protected function addModuleCMSFields(FieldList $fields): void
+    {
         // Remove SortOrder - managed automatically by GridFieldOrderableRows
         // Remove ViewCount - managed automatically by frontend tracking
         $fields->removeByName('SortOrder');
@@ -109,7 +146,10 @@ class FaqQuestion extends DataObject
                 ->setRows(15)
         );
 
-        // Add GridField for managing FAQ Categories
+        // Add GridField for managing FAQ Categories (not on sites that do not use categories)
+        if ( ! static::config()->get('show_categories')) {
+            return;
+        }
         $config = GridFieldConfig_RelationEditor::create();
 
         $fields->addFieldToTab(
@@ -121,8 +161,6 @@ class FaqQuestion extends DataObject
                 $config
             )
         );
-
-        return $fields;
     }
 
     /**
@@ -168,6 +206,13 @@ class FaqQuestion extends DataObject
      */
     public function getViewToken()
     {
+        // Outside a request (CLI tasks, publishing a block that renders questions for the search index) there is
+        // no session to read a token from, and no visitor to count (#8)
+        // has_curr() is gone in SS6 (curr() returns null there); on SS5 it avoids curr()'s warning on an empty stack
+        $controller = (method_exists(Controller::class, 'has_curr') && !Controller::has_curr()) ? null : Controller::curr();
+        if (!Injector::inst()->has(HTTPRequest::class) && !$controller) {
+            return '';
+        }
         $token = SecurityToken::inst();
         return $token->getValue();
     }
